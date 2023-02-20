@@ -1,4 +1,8 @@
-# Models, data, and graphical results for the submitted *Groundwater* publication titled "Hybrid data-driven and physics-based modeling of groundwater and subsidence with an application to Bangkok, Thailand"
+# Models, data, and graphical results
+# Submitted *Groundwater* publication titled "Hybrid data-driven and physics-based modeling of groundwater and subsidence with an application to Bangkok, Thailand"
+# Authors: Jenny T. Soonthornrangsan$^1$, Mark Bakker$^2$, Femke C. Vossepoel$^1$
+## $^1$Department of Geoscience & Engineering, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
+## $^1$Department of Water Management, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
 
 Various python scripts are provided that create different graphical results. 
 
