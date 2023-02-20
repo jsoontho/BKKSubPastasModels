@@ -4,6 +4,8 @@
 ##### <sup>1</sup>Department of Geoscience & Engineering, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
 ##### <sup>1</sup>Department of Water Management, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
 
+
+
 Various python scripts are provided that create different graphical results. 
 
 - Figures.py: Produces the figures shown in the main text of the paper
@@ -24,9 +26,9 @@ Various python scripts are provided that create different graphical results.
 
 figures\ : graphs created from the scripts
 
-models\: Pastas models created from Pastas_ModelGraphs_1950-2020.py script (Model files end with .pas)
+models\ : Pastas models created from Pastas_ModelGraphs_1950-2020.py script (Model files end with .pas)
 
-inputs\: inputs needed for scripts 
+inputs\ : inputs needed for scripts 
 
 - Groundwater observations for each well nest (LC\*\*\*\*\*\*.xlsx)
 
