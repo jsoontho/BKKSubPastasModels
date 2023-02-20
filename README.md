@@ -3,9 +3,10 @@
 ## Authors: Jenny T. Soonthornrangsan<sup>1</sup>, Mark Bakker<sup>2</sup>, Femke C. Vossepoel<sup>1</sup>
 ##### <sup>1</sup>Department of Geoscience & Engineering, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
 ##### <sup>1</sup>Department of Water Management, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
-  
-  
-  
+<br />
+<br />
+<br />
+
 Various python scripts are provided that create different graphical results. 
 
 - Figures.py: Produces the figures shown in the main text of the paper
