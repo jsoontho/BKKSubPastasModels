@@ -1,8 +1,8 @@
 # Models, data, and graphical results
-# Submitted *Groundwater* publication titled "Hybrid data-driven and physics-based modeling of groundwater and subsidence with an application to Bangkok, Thailand"
-# Authors: Jenny T. Soonthornrangsan$^1$, Mark Bakker$^2$, Femke C. Vossepoel$^1$
-## $^1$Department of Geoscience & Engineering, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
-## $^1$Department of Water Management, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
+## Submitted *Groundwater* publication titled "Hybrid data-driven and physics-based modeling of groundwater and subsidence with an application to Bangkok, Thailand"
+## Authors: Jenny T. Soonthornrangsan<sup>1</sup>, Mark Bakker<sup>2</sup>, Femke C. Vossepoel<sup>1</sup>
+### <sup>1</sup>Department of Geoscience & Engineering, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
+### <sup>1</sup>Department of Water Management, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
 
 Various python scripts are provided that create different graphical results. 
 
@@ -16,7 +16,7 @@ Various python scripts are provided that create different graphical results.
 
 - Pastas_ModelGraphs_1950-2020.py: Creates Pastas models with the option to save and import the model as well as produces graphical results shown in the paper and supplemental information. Models simulate groundwater for each well nest
 
-- Pastas_ResultsMaps_1950-2020.py: Creates spatial maps that show the groundwater RMSE and t_90 results for each well in each well nest. Imports previously created Pastas models
+- Pastas_ResultsMaps_1950-2020.py: Creates spatial maps that show the groundwater RMSE and t<sub>1</sub>90 results for each well in each well nest. Imports previously created Pastas models
 
 - Sub_RMSE_Map_1978-2020.py: Creates a spatial map that show the subsidence RMSE for each well nest
 
