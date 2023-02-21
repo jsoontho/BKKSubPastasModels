@@ -19,7 +19,7 @@ Various python scripts are provided that create different graphical results.
 
 - Pastas_ModelGraphs_1950-2020.py: Creates Pastas models with the option to save and import the model as well as produces graphical results shown in the paper and supplemental information. Models simulate groundwater for each well nest
 
-- Pastas_ResultsMaps_1950-2020.py: Creates spatial maps that show the groundwater RMSE and t<sub>1</sub>90 results for each well in each well nest. Imports previously created Pastas models
+- Pastas_ResultsMaps_1950-2020.py: Creates spatial maps that show the groundwater RMSE and t<sub>90</sub> results for each well in each well nest. Imports previously created Pastas models
 
 - Sub_RMSE_Map_1978-2020.py: Creates a spatial map that show the subsidence RMSE for each well nest
 
@@ -29,13 +29,13 @@ Various python scripts are provided that create different graphical results.
 <br />
 <br />
 
-figures\ : graphs created from the scripts
+`figures\` : graphs created from the scripts
 
-models\ : Pastas models created from Pastas_ModelGraphs_1950-2020.py script (Model files end with .pas)
+`models\`: Pastas models created from Pastas_ModelGraphs_1950-2020.py script (Model files end with .pas)
 
-inputs\ : inputs needed for scripts 
+`inputs\`: inputs needed for scripts 
 
-- Groundwater observations for each well nest (LC\*\*\*\*\*\*.xlsx)
+- Groundwater observations for each well nest (`LC******.xlsx`)
 
 - Subsidence observations for each well nest (SurveyingLevels.xlsx)
 
