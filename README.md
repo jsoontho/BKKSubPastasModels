@@ -2,7 +2,7 @@
 ## Submitted *Groundwater* publication titled "Hybrid data-driven and physics-based modeling of groundwater and subsidence with an application to Bangkok, Thailand"
 ## Authors: Jenny T. Soonthornrangsan<sup>1</sup>, Mark Bakker<sup>2</sup>, Femke C. Vossepoel<sup>1</sup>
 ##### <sup>1</sup>Department of Geoscience & Engineering, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
-##### <sup>1</sup>Department of Water Management, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
+##### <sup>2</sup>Department of Water Management, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
 <br />
 <br />
 <br />
