@@ -11,19 +11,11 @@ Various python scripts are provided that create different graphical results.
 
 - `Figures.py`: Produces the figures shown in the main text of the paper
 
-- `AnnSub_BarPlot_1978-2020.py`: Bar graphs of annual subsidence (cm) for each well nest during 1978-2020 (Shown in the main text and supplemental information)
-
-- `AnnSub_LineSens_1978-2020.py`: Line graphs of annual subsidence (cm) for sensitivity analyses of each parameter (Sskv, Sske, K, thickness) for one well nest (long run time so only calculating for one well nest at a time) (Shown in supplemental information)
-
-- `CumSub_LineForecast_1978-2060.py`: Line graphs of cumulative subsidence (cm) into the future depending on the pumping scenario for each well nest during 1978-2060 (Shown in the main text and supplemental information)
+- `SubsidenceModelResults_1978-2020.py`: Computes land subsidence at each well nest location. Plots annual subsidence rates (cm) bar graphs during 1978-2020 (Shown in the main text and supplemental information), error maps (subsidence RMSE for each well nest), forecast maps (2020-2060 in cm), sensitivity analysis (LCBKK013 for parameter sets Sske, Sskv, K, thickness; long run time so only calculating for one well nest at a time) (Shown in supplemental information)
 
 - `Pastas_ModelGraphs_1950-2020.py`: Creates Pastas models with the option to save and import the model as well as produces graphical results shown in the paper and supplemental information. Models simulate groundwater for each well nest
 
 - `Pastas_ResultsMaps_1950-2020.py`: Creates spatial maps that show the groundwater RMSE and t<sub>90</sub> results for each well in each well nest. Imports previously created Pastas models
-
-- `Sub_RMSE_Map_1978-2020.py`: Creates a spatial map that show the subsidence RMSE for each well nest
-
-- `main_functions.py`: Contains some functions that help with pre-processing data and creating graphs
 
 <br />
 <br />
@@ -35,7 +27,7 @@ Various python scripts are provided that create different graphical results.
 
 `inputs\`: inputs needed for scripts 
 
-- Groundwater observations for each well nest (`LC******.xlsx`)
+- Groundwater observations for each well nest. Note that in the paper, each well nest is referred to without "LC" (`LC******.xlsx`)
 
 - Subsidence observations for each well nest (`SurveyingLevels.xlsx`)
 
