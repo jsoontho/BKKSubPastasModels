@@ -197,7 +197,7 @@ wellnest_sens = ["LCBKK013"]
 # Increasing by 10%
 coeff = .5
 num = 11  # Num of increases in percentage
-sens_mode = "K"  # thick, Sskv, Sske, K
+sens_modes = ["Sske", "thick", "Sskv", "K"]
 
 # Preallocation
 # All results from every sensitivity
@@ -206,85 +206,91 @@ sens_sub = []
 sens_subv = []
 sens_ann = []
 
-# For each parameter increase
-for i in range(num):
+# For each sensitivity parameter set
+for sens_mode in sens_modes:
 
-    # Reading in thickness and storage data
-    path = os.path.join(os.path.abspath("inputs"), "SUBParameters.xlsx")
-    Thick_data = pd.read_excel(path, sheet_name="Thickness",
-                               index_col=0)  # Thickness
-    Sskv_data = pd.read_excel(path,
-                              sheet_name="Sskv",
-                              index_col=0)  # Sskv
-    Sske_data = pd.read_excel(path,
-                              sheet_name="Sske",
-                              index_col=0)  # Ssk
-    K_data = pd.read_excel(path,
-                           sheet_name="K",
-                           index_col=0)  # K
+    # For each parameter increase
+    for i in range(num):
 
-    # Sensitivity analyses depending on parameter
-    # Inelastic specific storage
-    if sens_mode == "Sskv":
+        # Reading in thickness and storage data
+        path = os.path.join(os.path.abspath("inputs"), "SUBParameters.xlsx")
+        Thick_data = pd.read_excel(path, sheet_name="Thickness",
+                                   index_col=0)  # Thickness
+        Sskv_data = pd.read_excel(path,
+                                  sheet_name="Sskv",
+                                  index_col=0)  # Sskv
+        Sske_data = pd.read_excel(path,
+                                  sheet_name="Sske",
+                                  index_col=0)  # Ssk
+        K_data = pd.read_excel(path,
+                               sheet_name="K",
+                               index_col=0)  # K
 
-        Sskv_data = Sskv_data.iloc[:, :9] * coeff
+        # Sensitivity analyses depending on parameter
+        # Inelastic specific storage
+        if sens_mode == "Sskv":
 
-    # Elastic specific storage
-    elif sens_mode == "Sske":
+            Sskv_data = Sskv_data.iloc[:, :9] * coeff
 
-        Sske_data = Sske_data.iloc[:, :9] * coeff
+        # Elastic specific storage
+        elif sens_mode == "Sske":
 
-    # Vertical hydraulic conductivity
-    elif sens_mode == "K":
+            Sske_data = Sske_data.iloc[:, :9] * coeff
 
-        K_data = K_data.iloc[:, :9] * coeff
+        # Vertical hydraulic conductivity
+        elif sens_mode == "K":
 
-    # Thickness
-    elif sens_mode == "thick":
+            K_data = K_data.iloc[:, :9] * coeff
 
-        Thick_data = Thick_data.iloc[:, :9] * coeff
+        # Thickness
+        elif sens_mode == "thick":
 
-    # Running subsidence model for every analysis value
-    all_, sub_, subv_ = bkk_sub_gw.\
-        bkk_sub.bkk_subsidence(wellnest_sens,
-                               mode, tmin,
-                               tmax,
-                               Thick_data,
-                               K_data,
-                               Sskv_data,
-                               Sske_data,
-                               CC=CC,
-                               Nz=node_num,
-                               ic_run=True,
-                               proxyflag=proxyflag,
-                               pumpflag=pumpflag,
-                               pump_path=ppath,
-                               pump_sheet=psheet,
-                               model_path=mpath)
+            Thick_data = Thick_data.iloc[:, :9] * coeff
 
-    sub_, subv_, ann_, _ = bkk_sub_gw.bkk_sub.bkk_postproc(wellnest_sens,
-                                                           sub_,
-                                                           subv_,
-                                                           all_)
+        # Running subsidence model for every analysis value
+        all_, sub_, subv_ = bkk_sub_gw.\
+            bkk_sub.bkk_subsidence(wellnest_sens,
+                                   mode, tmin,
+                                   tmax,
+                                   Thick_data,
+                                   K_data,
+                                   Sskv_data,
+                                   Sske_data,
+                                   CC=CC,
+                                   Nz=node_num,
+                                   ic_run=True,
+                                   proxyflag=proxyflag,
+                                   pumpflag=pumpflag,
+                                   pump_path=ppath,
+                                   pump_sheet=psheet,
+                                   model_path=mpath)
 
-    # Saving results
-    sens_results.append(all_)
-    sens_sub.append(sub_)
-    sens_subv.append(subv_)
-    sens_ann.append(ann_)
+        sub_, subv_, ann_, _ = bkk_sub_gw.bkk_sub.bkk_postproc(wellnest_sens,
+                                                               sub_,
+                                                               subv_,
+                                                               all_)
 
-    # Shifting parameter value
-    coeff += .1
+        # Saving results
+        sens_results.append(all_)
+        sens_sub.append(sub_)
+        sens_subv.append(subv_)
+        sens_ann.append(ann_)
 
-# Plotting
-# path to save figures
-path = os.path.abspath("figures")
+        # Shifting parameter value
+        coeff += .1
 
-# Plots results
-bkk_sub_gw.bkk_plotting.sub_sens_line(path, wellnest_sens, sens_results,
-                                      sens_sub, sens_subv, sens_ann,
-                                      tmin=tmin, tmax=tmax, mode=sens_mode,
-                                      num=num, save=1)
+    # Plotting
+    # path to save figures
+    path = os.path.abspath("figures")
+
+    # Plots results
+    # New tmin for subsidence change
+    tmin = "2020"
+    tmax = "2060"
+    bkk_sub_gw.bkk_plotting.sub_sens_line(path, wellnest_sens, sens_results,
+                                          sens_sub, sens_subv, sens_ann,
+                                          tmin=tmin, tmax=tmax, mode=sens_mode,
+                                          num=num, save=1)
 
 # %%###########################################################################
 # Plots Results: Forecasts of cumulative subsidence (cm) for pumping scenarios

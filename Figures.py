@@ -22,6 +22,7 @@ import pastas as ps
 import matplotlib.pyplot as plt
 import datetime
 from matplotlib.ticker import (AutoMinorLocator)
+import string
 
 # Bangkok Subsidence Model Package
 import bkk_sub_gw
@@ -32,18 +33,19 @@ import main_functions as mfs
 # Changing current directory to locaiton of python script
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-# %%###########################################################################
+# %% Pumping for four different sceniarios
+###############################################################################
 # Plotting settings
 ###############################################################################
 
-plt.rc("font", size=12)  # controls default text size
-plt.rc("axes", titlesize=5)  # fontsize of the title
+plt.rc("font", size=10)  # controls default text size
+plt.rc("axes", titlesize=10)  # fontsize of the title
 plt.rc("axes", labelsize=6)  # fontsize of the x and y labels
 plt.rc("xtick", labelsize=6)  # fontsize of the x tick labels
 plt.rc("ytick", labelsize=6)  # fontsize of the y tick labels
-plt.rc("legend", fontsize=6)  # fontsize of the legend
+plt.rc("legend", fontsize=5)  # fontsize of the legend
+plt.rcParams['legend.title_fontsize'] = 6  # fontsize of legend title
 
-# %% Pumping for four different sceniarios
 # Plotting pumping
 # Reading in data
 sheet = "EstTotalPump_54-60_Int50"
@@ -59,105 +61,28 @@ sheet = "EstTotalPump_54-60_IntF0"
 pump_0 = pd.read_excel(full_path, sheet_name=sheet)
 
 # Plotting
-plt.figure(figsize=(3.2, 2.2), dpi=300)
-plt.plot(pump_50.Date, pump_50.Pump2, linewidth=1.5, label="500,000 m$^3$/day",
-         color="hotpink")
-plt.plot(pump_50.Date, pump_25.Pump2, linewidth=1.5, label="250,000 m$^3$/day",
-         color="tab:orange")
-plt.plot(pump_50.Date, pump_50_25.Pump2, linewidth=1.5,
-         label="Delayed\n250,000 m$^3$/day",
-         color="tab:green")
-plt.plot(pump_50.Date, pump_100.Pump2, linewidth=1.5, label="1,000,000 m$^3$/day",
-         color="tab:red")
-plt.plot(pump_50.Date, pump_0.Pump2, linewidth=1.5, label="No Pumping",
-         color="tab:purple")
-plt.plot(pump_50.Date[:24472], pump_50.Pump2[:24472], linewidth=1.5, color="k",
-         label="Observed Pumping")
-plt.legend()
-plt.grid(True, linestyle="dotted")
-ax = plt.gca()
-# ax.set_xticklabels(x.year)
-plt.xlabel("Year")
-plt.ylabel("Pumping Rate (m$^3$/day)")
+fig, axs = plt.subplots(3, 1, figsize=(3.2, 6.4), dpi=300)
+axs[0].plot(pump_50.Date, pump_50.Pump2, linewidth=1.5, label="500,000 m$^3$/day",
+            color="hotpink")
+axs[0].plot(pump_50.Date, pump_25.Pump2, linewidth=1.5, label="250,000 m$^3$/day",
+            color="tab:orange")
+axs[0].plot(pump_50.Date, pump_50_25.Pump2, linewidth=1.5,
+            label="Delayed\n250,000 m$^3$/day",
+            color="tab:green")
+axs[0].plot(pump_50.Date, pump_100.Pump2, linewidth=1.5,
+            label="1,000,000 m$^3$/day",
+            color="tab:red")
+axs[0].plot(pump_50.Date, pump_0.Pump2, linewidth=1.5, label="No Pumping",
+            color="tab:purple")
+axs[0].plot(pump_50.Date[:24472], pump_50.Pump2[:24472], linewidth=1.5, color="k",
+            label="Historic Pumping")
+axs[0].legend()
+axs[0].grid(True, linestyle="dotted")
+axs[0].set_xlim([datetime.date(1978, 1, 1), datetime.date(2059, 12, 31)])
+plt.setp(axs[0].get_xticklabels(), visible=False)
+axs[0].set_ylabel("Pumping Rate\n(m$^3$/day)")
 
-# Saving
-path = "figures"
-fig_name = "1954-2060Pumping.png"
-full_figpath = os.path.join(path, fig_name)
-plt.savefig(full_figpath, dpi=300, bbox_inches="tight", format="png")
-
-fig_name = "1954-2060Pumping.eps"
-full_figpath = os.path.join(path, fig_name)
-plt.savefig(full_figpath, dpi=300, bbox_inches="tight", format="eps")
-
-# %% Pumping until 2020
-# Plotting pumping
-# Reading in data
-sheet = "EstTotalPump_54-60_Int50"
-full_path = os.path.join(os.path.abspath("inputs"), "BasinPumping.xlsx")
-pump_2020 = pd.read_excel(full_path, sheet_name=sheet)
-
-# Xticks
-x = pd.date_range(start=pump_2020.Date[0],
-                  end=pump_2020.Date[24472],
-                  periods=8)
-
-# Plotting
-plt.figure(figsize=(3.2, 2.2), dpi=300)
-plt.plot(pump_2020.Date[:24472], pump_2020.Pump2[:24472], linewidth=1.5)
-plt.xticks(x)
-ax = plt.gca()
-ax.set_xticklabels(x.year)
-ax.xaxis.set_minor_locator(AutoMinorLocator(3))
-plt.grid(True, linestyle=(0, (1, 5)), which="minor")
-plt.grid(True, linestyle="dotted", which="major")
-plt.xlabel("Year")
-plt.ylabel("Pumping Rate (m$^3$/day)")
-# plt.title("Basin-Wide Pumping Estimates for Bangkok")
-
-# Saving
-path = "figures"
-fig_name = "1954-2020Pumping.png"
-full_figpath = os.path.join(path, fig_name)
-plt.savefig(full_figpath, bbox_inches="tight", format="png")
-
-fig_name = "1954-2020Pumping.eps"
-full_figpath = os.path.join(path, fig_name)
-plt.savefig(full_figpath, bbox_inches="tight", format="eps")
-
-# %% Plotting one-day block response
-modelpath = os.path.abspath("models")
-# Model files
-modelfiles = os.listdir(modelpath)
-Wellnest_name = "LCBKK013"
-well_name = "PD32"
-wellmodel = [s for s in modelfiles
-             if np.logical_and(Wellnest_name in s, well_name in s)][0]
-model = ps.io.load(modelpath + "\\" + wellmodel)
-
-# Block response
-b = model.get_block_response("well")*1000
-x = np.linspace(0, 2000, 2000)
-y = np.append(0, b)
-
-# Plotting
-plt.figure(figsize=(3.2, 2.2), dpi=300)
-plt.plot(x, y[:2000], linewidth=1.5)
-plt.grid(True, linestyle="dotted")
-plt.xlabel("Days")
-plt.ylabel("Groundwater Head (m)")
-# plt.title("Groundwater Response from \n1000 m$^3$/day of Pumping for One Day")
-
-# Saving
-path = "figures"
-fig_name = "BlockResponseEx.png"
-full_figpath = os.path.join(path, fig_name)
-plt.savefig(full_figpath, bbox_inches="tight", format="png")
-
-fig_name = "BlockResponseEx.eps"
-full_figpath = os.path.join(path, fig_name)
-plt.savefig(full_figpath, bbox_inches="tight", format="eps")
-# %% Plotting Groundwater forecasts
+# Plotting Groundwater forecasts
 modelpath = os.path.abspath("models")
 # Model files
 modelfiles = os.listdir(modelpath)
@@ -173,7 +98,7 @@ pumpsheet = "EstTotalPump_54-60_Int50"
 
 # Original pumping scenario 500,000 m3/day
 # Loading model and simulating based on new scenario
-time_min = "1988"
+time_min = "1978"
 time_max = "2060"
 head50 = model.simulate(tmin=time_min, tmax=time_max)
 
@@ -242,40 +167,231 @@ model.parameters["stderr"] = stdparam
 head0 = model.simulate(tmin=time_min, tmax=time_max)
 
 # Plotting
-plt.figure(figsize=(3.2, 2.2), dpi=300)
-plt.rc("xtick", labelsize=6)  # fontsize of the x tick labels
-plt.rc("ytick", labelsize=6)  # fontsize of the y tick labels
-plt.rc("legend", fontsize=5)
-plt.plot(head50, linewidth=1.5, label="500,000 m$^3$/day",
+ax1 = plt.subplot(312, sharex=axs[0])
+ax1.plot(head50, linewidth=1.5, label="500,000 m$^3$/day",
          color="hotpink")
-plt.plot(head25, linewidth=1.5, label="250,000 m$^3$/day",
+ax1.plot(head25, linewidth=1.5, label="250,000 m$^3$/day",
          color="tab:orange")
-plt.plot(head50_25, linewidth=1.5, label="Delayed\n250,000 m$^3$/day",
+ax1.plot(head50_25, linewidth=1.5, label="Delayed\n250,000 m$^3$/day",
          color="tab:green")
-plt.plot(head100, linewidth=1.5, label="1,000,000 m$^3$/day",
+ax1.plot(head100, linewidth=1.5, label="1,000,000 m$^3$/day",
          color="tab:red")
-plt.plot(head0, linewidth=1.5, label="No Pumping",
+ax1.plot(head0, linewidth=1.5, label="No Pumping",
          color="tab:purple")
-plt.plot(head0[:12054], linewidth=1.5, color="black",
+ax1.plot(head0[:15654], linewidth=1.5, color="black",
          label="Observed Pumping")
-plt.grid(True, linestyle="dotted")
-plt.legend()
-plt.xlabel("Years")
-plt.ylabel("Groundwater Head (m)")
-# plt.title("LCBKK013 PD32\nGroundwater Forecasts\nBased on Pumping Scenarios")
+ax1.grid(True, linestyle="dotted")
+plt.setp(ax1.get_xticklabels(), visible=False)
+ax1.set_ylabel("Groundwater\nHead (m)")
 
-# saving
+# For each well nest
+wellnestlist = ["LCBKK013"]
+tmin = "1978"
+tmax = "2060"
+
+# Reading in thickness and storage data
+path = os.path.join(os.path.abspath("inputs"), "SUBParameters.xlsx")
+Thick_data = pd.read_excel(path, sheet_name="Thickness",
+                           index_col=0)  # Thickness
+Sskv_data = pd.read_excel(path,
+                          sheet_name="Sskv",
+                          index_col=0)  # Sskv
+Sske_data = pd.read_excel(path,
+                          sheet_name="Sske",
+                          index_col=0)  # Ssk
+K_data = pd.read_excel(path,
+                       sheet_name="K",
+                       index_col=0)  # K
+
+# Mode can be "raw" as in raw groundwater data vs "Pastas" for importing Pastas
+# simulated groundwater in the aquifers
+mode = "Pastas"
+
+# If mode is Pastas, need model path
+if mode == "Pastas":
+
+    mpath = os.path.abspath("models")
+
+# Pumping flag, for PASTAS, if changing pumping scenario
+pumpflag = 1
+# If changing pumping scenario, need pumping sheet/path
+if pumpflag == 1:
+
+    ppath = os.path.join(os.path.abspath("inputs"), "BasinPumping.xlsx")
+
+    # Pumping sheets
+    pumpsheets = ["EstTotalPump_54-60_Int50",
+                  "EstTotalPump_54-60_IntF25",
+                  "EstTotalPump_54-60_IntF100",
+                  "EstTotalPump_54-60_IntF50_25",
+                  "EstTotalPump_54-60_IntF0"]
+
+# Convergence criteria
+CC = 1 * 10**-5
+
+# Number of nodes in clay
+node_num = 10
+
+# Using available heads as proxy for missing
+proxyflag = 1
+
+# All ann subs
+all_ann_subs = []
+
+# For each pumping scenario
+for pumpsheet in pumpsheets:
+
+    # Calculates subsidence
+    all_results, sub_total, subv_total = bkk_sub_gw.\
+        bkk_sub.bkk_subsidence(wellnestlist,
+                               mode, tmin,
+                               tmax,
+                               Thick_data,
+                               K_data,
+                               Sskv_data,
+                               Sske_data,
+                               CC=CC,
+                               Nz=node_num,
+                               ic_run=True,
+                               proxyflag=proxyflag,
+                               pumpflag=pumpflag,
+                               pump_path=ppath,
+                               pump_sheet=pumpsheet,
+                               model_path=mpath)
+
+    # Post process data
+    sub_total, subv_total, ann_sub, \
+        _ = bkk_sub_gw.bkk_sub.bkk_postproc(wellnestlist,
+                                            sub_total,
+                                            subv_total,
+                                            all_results)
+
+    all_ann_subs.append(ann_sub)
+
+# Saving each scenario last annual rate
+ann_2060_500 = []
+ann_2060_250 = []
+ann_2060_d250 = []
+ann_2060_1000 = []
+ann_2060_0 = []
+
+ax2 = plt.subplot(313, sharex=axs[0])
+
+# For each well nest
+for num_well, wellnest in enumerate(wellnestlist):
+
+    # -1000 is to convert to mm and negative because subsidence is positive
+    # while uplift is negative
+    # 500,000 m3/day scenario
+    lastrate = (all_ann_subs[0][num_well][1].CumTotSum[-1] -
+                all_ann_subs[0][num_well][1].CumTotSum[-2])*-1000  # mm
+    ax2.plot(all_ann_subs[0][num_well][1].index,
+             all_ann_subs[0][num_well][1].CumTotSum*-100,
+             label="{:.1f}".format(lastrate), linewidth=1.5,
+             color="hotpink")
+
+    ann_2060_500.append(lastrate)
+
+    # 250,000 m3/day scenario
+    lastrate = (all_ann_subs[1][num_well][1].CumTotSum[-1] -
+                all_ann_subs[1][num_well][1].CumTotSum[-2])*-1000   # mm
+    ax2.plot(all_ann_subs[1][num_well][1].index,
+             all_ann_subs[1][num_well][1].CumTotSum*-100,
+             label="{:.1f}".format(lastrate), linewidth=1.5,
+             color="tab:orange")
+    ann_2060_250.append(lastrate)
+
+    # 500,000 -> 250,000 m3/day scenario
+    lastrate = (all_ann_subs[3][num_well][1].CumTotSum[-1] -
+                all_ann_subs[3][num_well][1].CumTotSum[-2])*-1000  # mm
+    ax2.plot(all_ann_subs[3][num_well][1].index,
+             all_ann_subs[3][num_well][1].CumTotSum*-100,
+             label="{:.1f}".format(lastrate), linewidth=1.5,
+             color="tab:green")
+    ann_2060_d250.append(lastrate)
+
+    # 1,000,000 m3/day scenario
+    lastrate = (all_ann_subs[2][num_well][1].CumTotSum[-1] -
+                all_ann_subs[2][num_well][1].CumTotSum[-2])*-1000  # mm
+    ax2.plot(all_ann_subs[2][num_well][1].index,
+             all_ann_subs[2][num_well][1].CumTotSum*-100,
+             label="{:.1f}".format(lastrate), linewidth=1.5,
+             color="tab:red")
+    ann_2060_1000.append(lastrate)
+
+    # No pumping scenario
+    lastrate = (all_ann_subs[4][num_well][1].CumTotSum[-1] -
+                all_ann_subs[4][num_well][1].CumTotSum[-2])*-1000  # mm
+    ax2.plot(all_ann_subs[4][num_well][1].index,
+             all_ann_subs[4][num_well][1].CumTotSum*-100,
+             label="{:.1f}".format(lastrate), linewidth=1.5,
+             color="tab:purple")
+    ann_2060_0.append(lastrate)
+
+    # Observed pumping
+    ax2.plot(all_ann_subs[4][num_well][1].index[:44],
+             all_ann_subs[4][num_well][1].CumTotSum.iloc[:44]*-100,  # mm
+             color="black", linewidth=1.5, label='_nolegend_')
+
+    # Plotting settings
+    plt.legend(title="2060 Rate\n  (mm/yr)",
+               loc=4, fontsize=6, fancybox=True)
+    ax2.set_ylabel("Cumulative\nSubsidence (cm)")
+    ax2.set_xlabel("Years")
+    ax2.yaxis.set_minor_locator(AutoMinorLocator(2))
+    plt.setp(ax2.get_xticklabels(), visible=True)
+    ax2.grid(True, linestyle=(0, (1, 10)), which="minor")
+    ax2.grid(True, linestyle="dotted", which="major")
+
+    # Annotating specific points
+    index_1990 = all_ann_subs[4][num_well][1].year == 1990
+    index_2000 = all_ann_subs[4][num_well][1].year == 2000
+    cum_value_1990 = all_ann_subs[4][num_well][1].CumTotSum[index_1990]*-100
+    cum_value_2000 = all_ann_subs[4][num_well][1].CumTotSum[index_2000]*-100
+    ann_value_1990 = all_ann_subs[4][num_well][1].AnnRates[index_1990]*-1000
+    ann_value_2000 = all_ann_subs[4][num_well][1].AnnRates[index_2000]*-1000
+    ax2.scatter(cum_value_1990.index, cum_value_1990[0], color="cyan")
+    ax2.scatter(cum_value_2000.index, cum_value_2000[0], color="cyan")
+    # annotation
+    ax2.text(cum_value_1990.index, cum_value_1990[0] - 4, "1990: " +
+             f"{ann_value_2000[0]:.1f}" + " mm/yr", fontsize=6)
+    # annotation
+    ax2.text(cum_value_2000.index, cum_value_2000[0] - 4, "2000: " +
+             f"{ann_value_1990[0]:.1f}" + " mm/yr", fontsize=6)
+    plt.tight_layout()
+    plt.show()
+
+axs[1] = ax1
+axs[2] = ax2
+
+# a), b), c) labels for paper
+for index, ax in enumerate(axs):
+
+    ax.text(-.2, 1.0, string.ascii_lowercase[index] + ")",
+            transform=ax.transAxes,
+            size=10, weight='bold')
+
+# Saving
 path = "figures"
-fig_name = "GWForecasts_LCBKK013PD32.png"
+fig_name = "ForecastFigs.png"
 full_figpath = os.path.join(path, fig_name)
-plt.savefig(full_figpath, bbox_inches="tight", format="png")
+plt.savefig(full_figpath, dpi=300, bbox_inches="tight", format="png")
 
-fig_name = "GWForecasts_LCBKK013PD32.eps"
+fig_name = "ForecastFigs.eps"
 full_figpath = os.path.join(path, fig_name)
-plt.savefig(full_figpath, bbox_inches="tight", format="eps")
-
+plt.savefig(full_figpath, dpi=300, bbox_inches="tight", format="eps")
 
 # %% Data availability
+###############################################################################
+# Plotting settings
+###############################################################################
+
+plt.rc("font", size=12)  # controls default text size
+plt.rc("axes", titlesize=5)  # fontsize of the title
+plt.rc("axes", labelsize=6)  # fontsize of the x and y labels
+plt.rc("xtick", labelsize=6)  # fontsize of the x tick labels
+plt.rc("ytick", labelsize=6)  # fontsize of the y tick labels
+plt.rc("legend", fontsize=6)  # fontsize of the legend
 # Pumping vs groundwater vs levelling measurements
 
 # Plotting pumping
@@ -296,6 +412,7 @@ axs[0].set_ylabel("Pumping Rate\n(m$^3$/day)")
 axs[0].set_title("Basin-Wide Pumping Estimates for Bangkok",
                  fontsize=7)
 axs[0].grid(True, linestyle="dotted")
+
 # Plottign groundwater
 # Reading in groundwater data
 Wellnest_name = "LCBKK013"
@@ -322,7 +439,7 @@ axs[1].plot(gw_well_head.index, gw_well_head.Head, color="k",
             linewidth=1.5)
 axs[1].set_xlim(([datetime.date(1954, 1, 1), datetime.date(2020, 12, 31)]))
 axs[1].set_ylabel("Head (m)")
-axs[1].set_title("Groundwater Levels for Well PD32 in Well Nest LCBKK013",
+axs[1].set_title("Measured Groundwater Levels for Well PD32 in Well Nest LCBKK013",
                  fontsize=7)
 axs[1].grid(True, linestyle="dotted")
 loc = os.path.join(os.path.abspath("inputs"), "SurveyingLevels.xlsx")
@@ -361,16 +478,23 @@ leveling = bench[
         bench.columns.str.contains("Land")].item()]
 
 leveling[leveling == 0] = np.nan
-axs[2].plot(leveling, "o", color="orange", linewidth=1.5,
-            markersize=3)
+axs[2].bar(leveling.index, -leveling.values, color="orange", width=300)
+axs[2].xaxis_date()
 axs[2].set_xlim(([datetime.date(1954, 1, 1), datetime.date(2020, 12, 31)]))
 axs[2].set_ylabel("Annual Rate\n(cm/year)")
 axs[2].set_title(
-    "Annual Land Subsidence Rates from Benchmark Leveling Station 5503",
+    "Measured Annual Land Subsidence Rates from Benchmark Leveling Station 5503",
     fontsize=7)
 plt.tight_layout()
 plt.rc("font", size=10)  # controls default text size
 axs[2].grid(True, linestyle="dotted")
+
+# a), b), c) labels for paper
+for index, ax in enumerate(axs):
+
+    ax.text(-.1, 1.1, string.ascii_lowercase[index] + ")",
+            transform=ax.transAxes,
+            size=10, weight='bold')
 
 # Saving
 path = "figures"
