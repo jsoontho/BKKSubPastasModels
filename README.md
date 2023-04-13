@@ -11,14 +11,12 @@ Various python scripts are provided that create different graphical results.
 
 - `Figures.py`: Produces the figures shown in the main text of the paper
   - `Figures.ipynb`: Jupyter Notebook version of file 
+  - [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jsoontho/BKKSubPastasModels/main?labpath=Figures.ipynb)
+  
 - `SubsidenceModelResults_1978-2020.py`: Computes land subsidence at each well nest location. Plots annual subsidence rates (cm) bar graphs during 1978-2020 (Shown in the main text and supplemental information), error maps (subsidence RMSE for each well nest), forecast maps (2020-2060 in cm), sensitivity analysis (LCBKK013 for parameter sets Sske, Sskv, K, thickness; long run time so only calculating for one well nest at a time) (Shown in Supplemental Information)
 
 - `Pastas_ModelGraphs_1950-2020.py`: Creates Pastas models with the option to save and import the model as well as produces graphical results shown in the paper and supplemental information. Models simulate groundwater for each well nest
-  - [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/git/https%3A%2F%2Fgithub.com%2Fjsoontho%2FBKKSubPastasModels/HEAD?labpath=https%3A%2F%2Fmybinder.org%2Fv2%2Fgh%2Fjsoontho%2FBKKSubPastasModels%2FHEAD%3Furlpath%3Dhttps%253A%252F%252Fgithub.com%252Fjsoontho%252FBKKSubPastasModels%252Fblob%252Fmain%252FPastas_ModelGraphs_1950-2020.ipynb)
-  - .. image:: https://mybinder.org/badge_logo.svg
- :target: https://mybinder.org/v2/git/https%3A%2F%2Fgithub.com%2Fjsoontho%2FBKKSubPastasModels/HEAD?labpath=https%3A%2F%2Fmybinder.org%2Fv2%2Fgh%2Fjsoontho%2FBKKSubPastasModels%2FHEAD%3Furlpath%3Dhttps%253A%252F%252Fgithub.com%252Fjsoontho%252FBKKSubPastasModels%252Fblob%252Fmain%252FPastas_ModelGraphs_1950-2020.ipynb
- 
-  - https://mybinder.org/v2/git/https%3A%2F%2Fgithub.com%2Fjsoontho%2FBKKSubPastasModels/HEAD?labpath=https%3A%2F%2Fmybinder.org%2Fv2%2Fgh%2Fjsoontho%2FBKKSubPastasModels%2FHEAD%3Furlpath%3Dhttps%253A%252F%252Fgithub.com%252Fjsoontho%252FBKKSubPastasModels%252Fblob%252Fmain%252FPastas_ModelGraphs_1950-2020.ipynb
+  - [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jsoontho/BKKSubPastasModels/main?labpath=Pastas_ModelGraphs_1950-2020.ipynb)
   
 - `Pastas_ResultsMaps_1950-2020.py`: Creates spatial maps that show the groundwater RMSE and t<sub>90</sub> results for each well in each well nest. Imports previously created Pastas models
 
