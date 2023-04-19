@@ -885,7 +885,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             missing = "BK"
 
                             # Loads model, PD as proxy for BK
-                            model = ps.io.load(model_path + "\\" + Pastasfiles[0])
+                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
 
                             # If changing pumping scenario
                             if pumpflag == 1:
@@ -906,7 +906,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             well_data.append(temp)
 
                             # Loads model, NL
-                            model = ps.io.load(model_path + "\\" + Pastasfiles[1])
+                            model = ps.io.load(model_path + "/" + Pastasfiles[1])
 
                             # If changing pumping scenario
                             if pumpflag == 1:
@@ -922,7 +922,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             well_data.append(temp)
 
                             # Loads model, NB
-                            model = ps.io.load(model_path + "\\" + Pastasfiles[2])
+                            model = ps.io.load(model_path + "/" + Pastasfiles[2])
 
                             # If changing pumping scenario
                             if pumpflag == 1:
@@ -949,7 +949,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             missing = "NL"
 
                             # Loads model, PD as proxy for BK
-                            model = ps.io.load(model_path + "\\" + Pastasfiles[0])
+                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
 
                             # If changing pumping scenario
                             if pumpflag == 1:
@@ -970,7 +970,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             well_data.append(temp)
 
                             # Loads model, NB as proxy for NL
-                            model = ps.io.load(model_path + "\\" + Pastasfiles[1])
+                            model = ps.io.load(model_path + "/" + Pastasfiles[1])
 
                             # If changing pumping scenario
                             if pumpflag == 1:
@@ -1001,7 +1001,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             missing = "NB"
 
                             # Loads model, PD as proxy for BK
-                            model = ps.io.load(model_path + "\\" + Pastasfiles[0])
+                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
 
                             # If changing pumping scenario
                             if pumpflag == 1:
@@ -1022,7 +1022,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             well_data.append(temp)
 
                             # Loads model, NL
-                            model = ps.io.load(model_path + "\\" + Pastasfiles[1])
+                            model = ps.io.load(model_path + "/" + Pastasfiles[1])
 
                             # If changing pumping scenario
                             if pumpflag == 1:
@@ -1053,7 +1053,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             missing = "PD"
 
                             # Loads model, NL as proxy for PD, BK
-                            model = ps.io.load(model_path + "\\" + Pastasfiles[0])
+                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
 
                             # If changing pumping scenario
                             if pumpflag == 1:
@@ -1079,7 +1079,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             well_data.append(temp)
 
                             # Loads model, NB
-                            model = ps.io.load(model_path + "\\" + Pastasfiles[1])
+                            model = ps.io.load(model_path + "/" + Pastasfiles[1])
 
                             # If changing pumping scenario
                             if pumpflag == 1:
@@ -1107,7 +1107,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
 
                             # Only head value as proxy for others that are
                             # missing
-                            model = ps.io.load(model_path + "\\" + Pastasfiles[0])
+                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
 
                             # If changing pumping scenario
                             if pumpflag == 1:
@@ -1140,7 +1140,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                         elif "_PD" in Pastasfiles[0]:
 
                             # Proxy
-                            model = ps.io.load(model_path + "\\" + Pastasfiles[0])
+                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
 
                             # If changing pumping scenario
                             if pumpflag == 1:
@@ -1174,7 +1174,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                         elif "_NL" in Pastasfiles[0]:
 
                             # Proxy
-                            model = ps.io.load(model_path + "\\" + Pastasfiles[0])
+                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
 
                             # If changing pumping scenario
                             if pumpflag == 1:
@@ -1208,7 +1208,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                         elif "_NB" in Pastasfiles[0]:
 
                             # Proxy
-                            model = ps.io.load(model_path + "\\" + Pastasfiles[0])
+                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
 
                             # If changing pumping scenario
                             if pumpflag == 1:
@@ -1265,7 +1265,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                 for i in range(num_clay):
 
                     # Loads model
-                    model = ps.io.load(model_path + "\\" + Pastasfiles[i])
+                    model = ps.io.load(model_path + "/" + Pastasfiles[i])
 
                     # If changing pumping scenario
                     if pumpflag == 1:
