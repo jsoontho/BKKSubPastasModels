@@ -1207,8 +1207,6 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
     plt.annotate("Gulf of Thailand", xy=(.44, .05),
                  xycoords="axes fraction", fontsize=5)
 
-    plt.show()
-
     # Saaving graphs
     if save == 1:
         fig_name1 = aq + "_" + mode + "_" + time_min + "_" + time_max + "_maps.eps"
@@ -1236,8 +1234,8 @@ def sub_forecast_map(path, wellnestlist, all_ann_subs,
     Assumes four wells in well nest
     """
     # Importing spatial coordinates
-    GWpath = 'C:/Users/jtsoonthornran/Downloads/GW/'
-    full_GWpath = os.path.join(GWpath, 'GroundwaterWellLocs.xls')
+    full_GWpath = os.path.join(os.path.abspath("inputs"),
+                               "GroundwaterWellLocs.xls")
     gwwell_locs = pd.read_excel(full_GWpath)
 
     # Locations of wellnests; removing duplicates
