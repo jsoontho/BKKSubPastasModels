@@ -188,6 +188,7 @@ def sub_bar(path, wellnestlist, all_results,
 
             # Plotting settings
             plt.legend(loc="center right")
+            plt.title(wellnest)
             plt.ylim((-2, 10))
             plt.ylabel("Annual Subsidence Rate (cm/yr)")
             plt.xlabel("Years")
@@ -584,6 +585,7 @@ def sub_sens_line(path, wellnestlist, all_results,
     plt.legend()
     plt.ylabel("Cumulative Subsidence (cm)")
     plt.xlabel("Years")
+    plt.title(wellnest)
 
     # Title and figure name changes based on mode
     # Inelastic specific storage
@@ -760,6 +762,7 @@ def sub_forecast(path, wellnestlist, all_ann_subs, save=0):
         # Plotting settings
         plt.ylabel("Cumulative Subsidence (cm)")
         plt.xlabel("Years")
+        plt.title(wellnest)
         ax.yaxis.set_minor_locator(AutoMinorLocator(2))
         plt.grid(True, linestyle=(0, (1, 10)), which="minor")
         plt.grid(True, linestyle="dashed", which="major")
@@ -861,6 +864,10 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
                       fontsize=5)
     map.drawmeridians(np.arange(99.5, 101.5, .25), labels=[0, 0, 0, 1],
                       fontsize=5)
+
+    # Annotating water bodies
+    plt.annotate("Gulf of Thailand", xy=(.44, .05),
+                 xycoords="axes fraction", fontsize=5)
 
     # Drawing Pastas/subsidence datapoints
     x, y = map(xs, ys)
@@ -1074,6 +1081,8 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         print("Average NormRMSE for all well nests: " +
               str("%1.f" % np.average(cs)) + "%")
 
+        plt.show()
+
     # Plotting GW well locations
     elif mode == "GW_WellNests":
 
@@ -1107,6 +1116,8 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
                             zorder=3,
                             marker="o", edgecolor="k",
                             linewidth=.75, color="yellow")
+
+        plt.show()
 
     # Forecasting subsidence for all wells
     elif mode == 'Sub_Forecast_Map':
@@ -1198,12 +1209,6 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         plt.show()
 
         return
-
-    # Annotating water bodies
-    plt.annotate("Gulf of Thailand", xy=(.44, .05),
-                 xycoords="axes fraction", fontsize=5)
-
-    plt.show()
 
     # Saaving graphs
     if save == 1:
@@ -1329,6 +1334,7 @@ def Pastas_results(models, Wellnest_name, well_names,
 
     # Creating figure
     fig = plt.figure(figsize=(5, 5), dpi=300)
+    fig.suptitle(Wellnest_name)  # Figure title
 
     # Adding subfigures
     gs = fig.add_gridspec(ncols=1, nrows=len(order)+1,
