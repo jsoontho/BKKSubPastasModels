@@ -1,5 +1,5 @@
 # ##############################################################################
-"""Plotting results from Pastas models for different wells in Bangkok, Thailand.
+"""Plotting spatial results from Pastas models for different wells in Bangkok, Thailand.
 
 A well nest may have 1-4 wells
 Outputs: Spatial maps
@@ -39,6 +39,7 @@ plt.rc('axes', labelsize=8)  # fontsize of the x and y labels
 plt.rc('xtick', labelsize=8)  # fontsize of the x tick labels
 plt.rc('ytick', labelsize=8)  # fontsize of the y tick labels
 plt.rc('legend', fontsize=6)  # fontsize of the legend
+
 # %% Importing Pastas
 
 ###############################################################################
@@ -118,7 +119,7 @@ for Wellnest_name in files:
         try:
             wellmodel = [s for s in modelfiles
                          if np.logical_and(Wellnest_name in s, well_name in s)][0]
-            model = ps.io.load(model_path + "\\" + wellmodel)
+            model = ps.io.load(model_path + "/" + wellmodel)
 
             # If does not exist
         except FileNotFoundError:

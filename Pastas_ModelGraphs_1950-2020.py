@@ -110,7 +110,7 @@ else:
     files = Wellnest_name
 
 ###############################################################################
-# Creating Pastas Model
+# Creating/Importing and Plotting Pastas Model
 ###############################################################################
 
 # For each well nest
@@ -292,7 +292,7 @@ for Wellnest_name in files:
 
             # If saving model
             if save_model == 1:
-                model.to_file(modelpath + "\\" + Wellnest_name + '_' +
+                model.to_file(modelpath + "/" + Wellnest_name + '_' +
                               well_name + '_GW_' + time_min + '_' + time_max +
                               '_model.pas')
 
@@ -312,7 +312,7 @@ for Wellnest_name in files:
                 wellmodel = [s for s in modelfiles
                              if np.logical_and(Wellnest_name in s,
                                                well_name in s)][0]
-                model = ps.io.load(modelpath + "\\" + wellmodel)
+                model = ps.io.load(modelpath + "/" + wellmodel)
 
                 # Gets time min and max from file name
                 time_min = wellmodel[wellmodel.find("_1")+1:wellmodel.find("_1")+5]
@@ -425,4 +425,4 @@ for Wellnest_name in files:
 
         bkk_sub_gw.bkk_plotting.Pastas_results(models, Wellnest_name,
                                                well_names, time_mins,
-                                               time_maxs, figpath)
+                                               time_maxs, figpath, save_graph)

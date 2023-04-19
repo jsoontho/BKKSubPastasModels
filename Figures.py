@@ -1,7 +1,7 @@
 # ##############################################################################
 """Calculate subsidence in BKK at wellnests with 8 aquifers but simulates top four.
 
-# Plotting figures for Groundwater Paper
+# Plotting two main figures for Groundwater Paper
 # Article Title: Hybrid data-driven and physics-based modeling of ground-
 water and subsidence with an application to Bangkok, Thailand
 
