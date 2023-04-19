@@ -13,13 +13,13 @@ Various python scripts are provided that create different graphical results. Jup
   - Notebook version: https://githubtocolab.com/jsoontho/BKKSubPastasModels/blob/main/JupyterNotebooks/Figures.ipynb
   
 - `SubsidenceModelResults_1978-2020.py`: Computes land subsidence at each well nest location. Plots annual subsidence rates (cm) bar graphs during 1978-2020 (Shown in the main text and supplemental information), error maps (subsidence RMSE for each well nest), forecast maps (2020-2060 in cm), sensitivity analysis (LCBKK013 for parameter sets Sske, Sskv, K, thickness; long run time so only calculating for one well nest at a time) (Shown in Supplemental Information)
-  - Notebook version: https://githubtocolab.com/jsoontho/BKKSubPastasModels/blob/main/JupyterNotebooks/SubsidenceModelResults_1978-2020.py
+  - Notebook version: https://githubtocolab.com/jsoontho/BKKSubPastasModels/blob/main/JupyterNotebooks/SubsidenceModelResults_1978-2020.ipynb
 
 - `Pastas_ModelGraphs_1950-2020.py`: Creates Pastas models with the option to save and import the model as well as produces graphical results shown in the paper and supplemental information. Models simulate groundwater for each well nest
-  - Notebook version: https://githubtocolab.com/jsoontho/BKKSubPastasModels/blob/main/JupyterNotebooks/Pastas_ModelGraphs_1950-2020.py
+  - Notebook version: https://githubtocolab.com/jsoontho/BKKSubPastasModels/blob/main/JupyterNotebooks/Pastas_ModelGraphs_1950-2020.ipynb
   
 - `Pastas_ResultsMaps_1950-2020.py`: Creates spatial maps that show the groundwater RMSE and t<sub>90</sub> results for each well in each well nest. Imports previously created Pastas models
-  - Notebook version: https://githubtocolab.com/jsoontho/BKKSubPastasModels/blob/main/JupyterNotebooks/Pastas_ResultsMaps_1950-2020.py
+  - Notebook version: https://githubtocolab.com/jsoontho/BKKSubPastasModels/blob/main/JupyterNotebooks/Pastas_ResultsMaps_1950-2020.ipynb
 
 
 <br />
