@@ -512,6 +512,7 @@ def sub_sens_line(path, wellnestlist, all_results,
 
     # Saving rates
     lastrates = []
+    change2020_2060 = []
 
     # For each sensitivity
     for i in range(num):
@@ -529,37 +530,55 @@ def sub_sens_line(path, wellnestlist, all_results,
                         annual_data[i][num_well][1].CumTotSum[-2])*-1000  # mm
             lastrates.append(lastrate)
 
+            # Get cumulative sum of highest year below tmax
+            max_year = annual_data[i][num_well][1].year[
+                annual_data[i][num_well][1].year < int(tmax)].max()
+
+            # Saving difference in cum sum between a time period
+            # Cumulative sub in cm
+            change2020_2060.append((annual_data[i][num_well][1].CumTotSum[
+                annual_data[i][num_well][1].year == max_year].item() -
+                annual_data[i][num_well][1].CumTotSum[
+                annual_data[i][num_well][1].year == int(tmin)].item()) *
+                -100)
+
         coeff += 10
         color_coeff -= .1
 
-    plt.annotate("mm/yr",
-                 xy=(370, 200),
-                 xycoords="axes points",
-                 color="k",
-                 weight="bold")
-
-    # Different positionings if elastic
     if mode == "Sske":
 
-        plt.annotate("{:.1f}".format(lastrates[0]),
-                     xy=(380, 180),
-                     xycoords="axes points",
-                     color=color1[0])
+        # Y location of text
+        yloc = 170
 
-        plt.annotate("{:.1f}".format(lastrates[-1]),
-                     xy=(380, 165),
-                     xycoords="axes points",
-                     color=color1[-1])
     else:
-        plt.annotate("{:.1f}".format(lastrates[0]),
-                     xy=(380, 165),
-                     xycoords="axes points",
-                     color=color1[0])
 
-        plt.annotate("{:.1f}".format(lastrates[-1]),
-                     xy=(380, 180),
+        # Y location of text
+        yloc = 70
+
+    plt.annotate("2020-2060\nSubsidence\nChange (cm)",
+                 xy=(360, 190),
+                 xycoords="axes points",
+                 color="k",
+                 fontsize=8,
+                 weight="bold")
+
+    # Different positionings of text
+    for i in range(len(change2020_2060)):
+
+        plt.annotate("{:.1f}".format(change2020_2060[i]),
+                     xy=(380, yloc),
                      xycoords="axes points",
-                     color=color1[-1])
+                     color=color1[i])
+
+        if mode == "Sske":
+
+            # Y location of text
+            yloc -= 10
+
+        else:
+
+            # Y location of text
+            yloc += 10
 
     # Plotting settings
     plt.legend()
@@ -572,38 +591,53 @@ def sub_sens_line(path, wellnestlist, all_results,
 
         plt.title("Inelastic Specific Storage\nSensitivity Analysis")
 
-        fig_name = wellnest + "_CumSubTotal_SENS_" + \
+        fig_name1 = wellnest + "_CumSubTotal_SENS_" + \
             mode + ".eps"
+
+        fig_name2 = wellnest + "_CumSubTotal_SENS_" + \
+            mode + ".png"
 
     # Elastic specific storage
     elif mode == "Sske":
 
         plt.title("Elastic Specific Storage\nSensitivity Analysis")
 
-        fig_name = wellnest + "_CumSubTotal_SENS_" + \
+        fig_name1 = wellnest + "_CumSubTotal_SENS_" + \
             mode + ".eps"
+
+        fig_name2 = wellnest + "_CumSubTotal_SENS_" + \
+            mode + ".png"
 
     # Vertical hydraulic conductivity
     elif mode == "K":
 
         plt.title("Vertical Hydraulic Conductivity\nSensitivity Analysis")
 
-        fig_name = wellnest + "_CumSubTotal_SENS_" + \
+        fig_name1 = wellnest + "_CumSubTotal_SENS_" + \
             mode + ".eps"
+
+        fig_name2 = wellnest + "_CumSubTotal_SENS_" + \
+            mode + ".png"
 
     # Thickness
     elif mode == "thick":
 
         plt.title("Thickness Sensitivity Analysis")
 
-        fig_name = wellnest + "_CumSubTotal_SENS_" + \
+        fig_name1 = wellnest + "_CumSubTotal_SENS_" + \
             mode + ".eps"
+
+        fig_name2 = wellnest + "_CumSubTotal_SENS_" + \
+            mode + ".png"
 
     # If saving figure
     if save == 1:
 
-        full_figpath = os.path.join(path, fig_name)
+        full_figpath = os.path.join(path, fig_name1)
         plt.savefig(full_figpath, dpi=300, format="eps")
+
+        full_figpath = os.path.join(path, fig_name2)
+        plt.savefig(full_figpath, dpi=300, format="png")
 
 
 def sub_forecast(path, wellnestlist, all_ann_subs, save=0):
@@ -816,7 +850,7 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
     map.fillcontinents(color="#4d9c83")
 
     # Adding Thailand province boundaries
-    map.readshapefile(os.path.join(os.path.abspath("inputs\\GIS"), "provinces"),
+    map.readshapefile(os.path.join(os.path.abspath("inputs/GIS"), "provinces"),
                       name="provinces", drawbounds=True, zorder=1, linewidth=.5)
 
     # Drawing rivers
@@ -824,9 +858,9 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
 
     # draw parallels and meridians
     map.drawparallels(np.arange(12.5, 14, .5), labels=[1, 0, 0, 0],
-                      fontsize=6)
+                      fontsize=5)
     map.drawmeridians(np.arange(99.5, 101.5, .25), labels=[0, 0, 0, 1],
-                      fontsize=6)
+                      fontsize=5)
 
     # Drawing Pastas/subsidence datapoints
     x, y = map(xs, ys)
@@ -920,11 +954,12 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         # Title
         avgRMSE = pd.concat([cs["NB"].cs, cs["NL"].cs, cs["PD"].cs,
                              cs["BK"].cs], ignore_index=True)
-        print(str("%.2f" % np.average(cs["NB"].cs)) + "NB")
-        print(str("%.2f" % np.average(cs["NL"].cs)) + "NL")
-        print(str("%.2f" % np.average(cs["PD"].cs)) + "PD")
-        print(str("%.2f" % np.average(cs["BK"].cs)) + "BK")
-        print("NormRMSE: " + str("%.2f" % np.average(avgRMSE)) + "%")
+        print(str("%.2f" % np.average(cs["NB"].cs)) + "% NormRMSE for NB")
+        print(str("%.2f" % np.average(cs["NL"].cs)) + "% NormRMSE for NL")
+        print(str("%.2f" % np.average(cs["PD"].cs)) + "% NormRMSE for PD")
+        print(str("%.2f" % np.average(cs["BK"].cs)) + "% NormRMSE for BK")
+        print("Average NormRMSE for all four aquifers: " +
+              str("%.2f" % np.average(avgRMSE)) + "%")
 
     # t90 mode for all wells and all well nests
     # wells as wedges
@@ -1036,7 +1071,8 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         cb.ax.tick_params(labelsize=6)
         cb.set_label("Normalized RMSE", fontsize=7)
         cb.solids.set_rasterized(False)
-        print("NormRMSE: " + str("%1.f" % np.average(cs)) + "%")
+        print("Average NormRMSE for all well nests: " +
+              str("%1.f" % np.average(cs)) + "%")
 
         plt.show()
 
@@ -1048,19 +1084,31 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
                     marker="o", edgecolor="k",
                     linewidth=.75, color="mediumorchid")
 
+        # Labelling well nests
         for i, txt in enumerate(labels):
 
+            # Different labeling locations for these well nests
             if txt in ["LCBKK038", "LCBKK007", "LCBKK003", "LCBKK041",
                        "LCBKK005", "LCBKK021"]:
                 ax.annotate(txt[2:], (x[i], y[i]), xycoords="data",
                             fontsize=3.5, color="w",
                             xytext=(-8, 1.5), textcoords="offset points",
                             weight="bold")
+
+            # Other well nests standard labeling
             else:
                 ax.annotate(txt[2:], (x[i], y[i]), xycoords="data",
                             fontsize=3.5, color="w",
                             xytext=(-8, 3.5), textcoords="offset points",
                             weight="bold")
+
+            # Different color for well nest LCBKK013 in paper
+            if txt == "LCBKK013":
+
+                map.scatter(x[i], y[i], s=15,
+                            zorder=3,
+                            marker="o", edgecolor="k",
+                            linewidth=.75, color="yellow")
 
         plt.show()
 
@@ -1188,7 +1236,7 @@ def sub_forecast_map(path, wellnestlist, all_ann_subs,
     Assumes four wells in well nest
     """
     # Importing spatial coordinates
-    GWpath = 'C:\\Users\\jtsoonthornran\\Downloads\\GW\\'
+    GWpath = 'C:/Users/jtsoonthornran/Downloads/GW/'
     full_GWpath = os.path.join(GWpath, 'GroundwaterWellLocs.xls')
     gwwell_locs = pd.read_excel(full_GWpath)
 
@@ -1267,7 +1315,7 @@ plt.rc("legend", fontsize=6)  # fontsize of the legend
 
 
 def Pastas_results(models, Wellnest_name, well_names,
-                   time_mins, time_maxs, figpath):
+                   time_mins, time_maxs, figpath, save):
     """Plot Pastas graphs that are in main paper.
 
     Wellnest_name - Name of well nest as a string
@@ -1276,6 +1324,7 @@ def Pastas_results(models, Wellnest_name, well_names,
     time_mins - list of time minimum as string
     time_maxs - list of time maximum as string
     figpath - string path to save figure
+    save - 1 to save figure, 0 to not save
     """
     # For each well in well names, determine order
     # Which well to start with because want BK, PD, NL, NB order
@@ -1283,7 +1332,7 @@ def Pastas_results(models, Wellnest_name, well_names,
              for x in well_names if y in x]
 
     # Creating figure
-    fig = plt.figure(figsize=(3.3, 3.3), dpi=300)
+    fig = plt.figure(figsize=(5, 5), dpi=300)
 
     # Adding subfigures
     gs = fig.add_gridspec(ncols=1, nrows=len(order)+1,
@@ -1355,7 +1404,7 @@ def Pastas_results(models, Wellnest_name, well_names,
         # Plot 1 settings
         ax1.set_ylabel("Head\n(m)", labelpad=0)
         ax1.legend(loc=(0, 1), ncol=3, frameon=False, numpoints=3,
-                   fontsize=5)
+                   fontsize=8)
         ax1.set_ylim(ylims[0])
         ax1.tick_params(axis="both", which="major", pad=0)
         # ax1.set_title(well_name, fontsize=6)
@@ -1363,7 +1412,7 @@ def Pastas_results(models, Wellnest_name, well_names,
         ax1.xaxis.set_ticks_position('none')
         ax1.annotate(well_name,
                      xy=(-.1, 1), xycoords="axes fraction",
-                     fontsize=6, horizontalalignment="center",
+                     fontsize=8, horizontalalignment="center",
                      weight="bold",
                      bbox=dict(boxstyle="round", fc="0.8"),
                      verticalalignment="baseline")
@@ -1385,12 +1434,12 @@ def Pastas_results(models, Wellnest_name, well_names,
         response.plot(ax=axb)
         title = "Step response"
         axb.tick_params(axis="both", which="major", pad=0)
-        axb.set_xlabel("Days", fontsize=4, labelpad=-5)
-        axb.set_ylabel("Head", fontsize=4, labelpad=-5)
+        axb.set_xlabel("Days", fontsize=6, labelpad=-5)
+        axb.set_ylabel("Head", fontsize=6, labelpad=-5)
         axb.xaxis.set_label_coords(.28, -.5)
         axb.yaxis.set_label_coords(-.48, .2)
-        axb.set_title(title, fontsize=4, pad=0)
-        axb.tick_params(labelsize=4)
+        axb.set_title(title, fontsize=6, pad=0)
+        axb.tick_params(labelsize=6)
         axb.set_xlim(rmin, rmax)
 
         # If last well
@@ -1409,7 +1458,7 @@ def Pastas_results(models, Wellnest_name, well_names,
             ax0.set_ylabel("Rate\n(m$^3$/day)", labelpad=0)
             ax0.set_xlabel("Year")
             ax0.legend(loc=(.1, 1), ncol=3, frameon=False,
-                       fontsize=5)
+                       fontsize=8)
             ax0.tick_params(axis="both", which="major", pad=0)
             ax0.set_ylim([2.5 * 10**5, 3 * 10**6])
 
@@ -1429,20 +1478,22 @@ def Pastas_results(models, Wellnest_name, well_names,
 
         plt.subplots_adjust(right=0.95)
 
-    # Fig name
-    fig_name3 = Wellnest_name + "_GW_" + \
-        time_min + "_" + time_max + "_PAPER.png"
-    # Fig path
-    full_figpath = os.path.join(figpath, fig_name3)
-    # Save fig
-    plt.savefig(full_figpath, dpi=300, bbox_inches="tight",
-                format="png")
+    # To save figure
+    if save == 1:
+        # Fig name
+        fig_name3 = Wellnest_name + "_GW_" + \
+            time_min + "_" + time_max + "_PAPER.png"
+        # Fig path
+        full_figpath = os.path.join(figpath, fig_name3)
+        # Save fig
+        plt.savefig(full_figpath, dpi=300, bbox_inches="tight",
+                    format="png")
 
-    # Fig name
-    fig_name3 = Wellnest_name + "_GW_" + \
-        time_min + "_" + time_max + "_PAPER.eps"
-    # Fig path
-    full_figpath = os.path.join(figpath, fig_name3)
-    # Save fig
-    plt.savefig(full_figpath, dpi=300, bbox_inches="tight",
-                format="eps")
+        # Fig name
+        fig_name3 = Wellnest_name + "_GW_" + \
+            time_min + "_" + time_max + "_PAPER.eps"
+        # Fig path
+        full_figpath = os.path.join(figpath, fig_name3)
+        # Save fig
+        plt.savefig(full_figpath, dpi=300, bbox_inches="tight",
+                    format="eps")
