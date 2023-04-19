@@ -865,10 +865,6 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
     map.drawmeridians(np.arange(99.5, 101.5, .25), labels=[0, 0, 0, 1],
                       fontsize=5)
 
-    # Annotating water bodies
-    plt.annotate("Gulf of Thailand", xy=(.44, .05),
-                 xycoords="axes fraction", fontsize=5)
-
     # Drawing Pastas/subsidence datapoints
     x, y = map(xs, ys)
 
