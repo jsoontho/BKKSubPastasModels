@@ -7,20 +7,19 @@
 <br />
 <br />
 
-Various python scripts are provided that create different graphical results. 
+Various python scripts are provided that create different graphical results. Jupyter Note book versions are in `JupyterNotebooks\.`
 
 - `Figures.py`: Produces the figures shown in the main text of the paper
-  - `Figures.ipynb`: Jupyter Notebook version of file 
-  - [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jsoontho/BKKSubPastasModels/main?labpath=Figures.ipynb)
+  - Notebook version: https://githubtocolab.com/jsoontho/BKKSubPastasModels/blob/main/JupyterNotebooks/Figures.ipynb
   
 - `SubsidenceModelResults_1978-2020.py`: Computes land subsidence at each well nest location. Plots annual subsidence rates (cm) bar graphs during 1978-2020 (Shown in the main text and supplemental information), error maps (subsidence RMSE for each well nest), forecast maps (2020-2060 in cm), sensitivity analysis (LCBKK013 for parameter sets Sske, Sskv, K, thickness; long run time so only calculating for one well nest at a time) (Shown in Supplemental Information)
-  - [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jsoontho/BKKSubPastasModels/main?labpath=SubsidenceModelResults_1978-2020.ipynb)
+  - Notebook version: https://githubtocolab.com/jsoontho/BKKSubPastasModels/blob/main/JupyterNotebooks/SubsidenceModelResults_1978-2020.ipynb
 
 - `Pastas_ModelGraphs_1950-2020.py`: Creates Pastas models with the option to save and import the model as well as produces graphical results shown in the paper and supplemental information. Models simulate groundwater for each well nest
-  - [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jsoontho/BKKSubPastasModels/main?labpath=Pastas_ModelGraphs_1950-2020.ipynb)
+  - Notebook version: https://githubtocolab.com/jsoontho/BKKSubPastasModels/blob/main/JupyterNotebooks/Pastas_ModelGraphs_1950-2020.ipynb
   
 - `Pastas_ResultsMaps_1950-2020.py`: Creates spatial maps that show the groundwater RMSE and t<sub>90</sub> results for each well in each well nest. Imports previously created Pastas models
-  - [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jsoontho/BKKSubPastasModels/main?labpath=Pastas_ResultsMaps_1950-2020.ipynb)
+  - Notebook version: https://githubtocolab.com/jsoontho/BKKSubPastasModels/blob/main/JupyterNotebooks/Pastas_ResultsMaps_1950-2020.ipynb
 
 
 <br />
