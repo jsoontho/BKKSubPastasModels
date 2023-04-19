@@ -1074,8 +1074,6 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         print("Average NormRMSE for all well nests: " +
               str("%1.f" % np.average(cs)) + "%")
 
-        plt.show()
-
     # Plotting GW well locations
     elif mode == "GW_WellNests":
 
@@ -1109,8 +1107,6 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
                             zorder=3,
                             marker="o", edgecolor="k",
                             linewidth=.75, color="yellow")
-
-        plt.show()
 
     # Forecasting subsidence for all wells
     elif mode == 'Sub_Forecast_Map':
@@ -1206,6 +1202,8 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
     # Annotating water bodies
     plt.annotate("Gulf of Thailand", xy=(.44, .05),
                  xycoords="axes fraction", fontsize=5)
+
+    plt.show()
 
     # Saaving graphs
     if save == 1:
