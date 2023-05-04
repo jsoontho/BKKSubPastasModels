@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 from mycolorpy import colorlist as mcp
 from matplotlib.ticker import (AutoMinorLocator)
+import matplotlib.ticker as mticker
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Wedge
 from statistics import median
@@ -55,6 +56,11 @@ plt.rc("legend", fontsize=8)  # fontsize of the legend
 # %%###########################################################################
 # Plotting results
 ##############################################################################
+
+def nse(predictions, targets):
+    return 1-(np.sum((targets-predictions)**2) /
+              np.sum((targets-np.mean(targets))**2))
+
 
 def sub_bar(path, wellnestlist, all_results,
             sub_total, subv_total,
@@ -137,7 +143,7 @@ def sub_bar(path, wellnestlist, all_results,
 
         # Figure plotting model results against measurements
         # Converts to cm to match measurements
-        plt.figure(figsize=(6.75, 3.38), dpi=300)
+        plt.figure(figsize=(6.75, 3.38), dpi=400)
 
         # Bar graph
         # annual data in cm
@@ -213,13 +219,19 @@ def sub_bar(path, wellnestlist, all_results,
                                  "2008", "", "2010", "", "2012",
                                  "", "2014", "", "2016", "",
                                  "2018", "", "2020"])
+        # Setting fig size again
+        plt.gcf().set_size_inches(6.75, 3.38)
 
-            # If saving figure
-            if np.logical_and(save == 1, benchflag == 1):
+        # If saving figure
+        if np.logical_and(save == 1, benchflag == 1):
 
-                fig_name = wellnest + "_BenchvsImplicit_AnnSubTotal.eps"
-                full_figpath = os.path.join(path, fig_name)
-                plt.savefig(full_figpath, format="eps")
+            fig_name = wellnest + "_BenchvsImplicit_AnnSubTotal.eps"
+            full_figpath = os.path.join(path, fig_name)
+            plt.savefig(full_figpath, format="eps")
+
+            fig_name = wellnest + "_BenchvsImplicit_AnnSubTotal.png"
+            full_figpath = os.path.join(path, fig_name)
+            plt.savefig(full_figpath, format="png")
 
 
 def gwlocs_map(path, save=0):
@@ -299,7 +311,7 @@ def gwlocs_map(path, save=0):
 
     # Printing average subsidence rmse (cm/yr)
     # Initializing figure
-    fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=300)
+    fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=400)
     datalim = None
     map = Basemap(llcrnrlon=100.3, llcrnrlat=13.4, urcrnrlon=100.8, urcrnrlat=14,
                   resolution="h", ellps="WGS84", lat_0=13.6, lon_0=100.4)
@@ -312,11 +324,11 @@ def gwlocs_map(path, save=0):
 
         fig_name1 = "Map_GWLocs.eps"
         full_figpath = os.path.join(path, fig_name1)
-        plt.savefig(full_figpath, dpi=300, bbox_inches="tight", format="eps")
+        plt.savefig(full_figpath, dpi=400, bbox_inches="tight", format="eps")
 
         fig_name1 = "Map_GWLocs.png"
         full_figpath = os.path.join(path, fig_name1)
-        plt.savefig(full_figpath, dpi=300, bbox_inches="tight", format="png")
+        plt.savefig(full_figpath, dpi=400, bbox_inches="tight", format="png")
 
 
 def sub_rmse_map(path, wellnestlist, all_results,
@@ -418,21 +430,24 @@ def sub_rmse_map(path, wellnestlist, all_results,
 
         plot_data = plot_data.dropna()
 
-        rms = mean_squared_error(plot_data[
-                                 plot_data.columns[
-                                     plot_data.columns.str.contains(
-                                         "Land")].item()],
-                                 plot_data.AnnRates, squared=False)
-
-        cs_rmse.append(rms)
-        cs_perc.append(rms/(plot_data[
+        landlevel = plot_data[
             plot_data.columns[
                 plot_data.columns.str.contains(
-                    "Land")].item()].max() -
-            plot_data[
-                plot_data.columns[
-                    plot_data.columns.str.contains(
-                        "Land")].item()].min()))
+                    "Land")].item()]
+
+        # Calculating rmse
+        rms = mean_squared_error(landlevel[landlevel != 0],
+                                 plot_data.AnnRates[landlevel != 0],
+                                 squared=False)
+        cs_rmse.append(rms)
+
+        # Taking out measurement outliers
+        # q75, q25 = np.percentile(-landlevel[landlevel != 0], [75, 25])
+        # cs_perc.append(rms/(q75 - q25))
+        # print(wellnest, rms/(q75 - q25))
+
+        cs_perc.append(rms/np.median(-landlevel[landlevel != 0]))
+        print(wellnest, rms/np.median(-landlevel[landlevel != 0]))
         x_ = gwwell_locs.Long[gwwell_locs.WellNest_Name == wellnest].item()
         y_ = gwwell_locs.Lat[gwwell_locs.WellNest_Name == wellnest].item()
         xs.append(x_)
@@ -440,7 +455,7 @@ def sub_rmse_map(path, wellnestlist, all_results,
 
     # Printing average subsidence rmse (cm/yr)
     # Initializing figure
-    fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=300)
+    fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=400)
     datalim = None
     map = Basemap(llcrnrlon=100.3, llcrnrlat=13.4, urcrnrlon=100.8, urcrnrlat=14,
                   resolution="h", ellps="WGS84", lat_0=13.6, lon_0=100.4)
@@ -455,15 +470,15 @@ def sub_rmse_map(path, wellnestlist, all_results,
 
         fig_name1 = "Map_Sub_RMSE_" + tmin + "_" + tmax + "_50_2020.eps"
         full_figpath = os.path.join(path, fig_name1)
-        plt.savefig(full_figpath, dpi=300, bbox_inches="tight", format="eps")
+        plt.savefig(full_figpath, dpi=400, bbox_inches="tight", format="eps")
 
         fig_name1 = "Map_Sub_RMSE_" + tmin + "_" + tmax + "_50_2020.png"
         full_figpath = os.path.join(path, fig_name1)
-        plt.savefig(full_figpath, dpi=300, bbox_inches="tight", format="png")
+        plt.savefig(full_figpath, dpi=400, bbox_inches="tight", format="png")
 
     # Printing average subsidence rmse relative to subsidence rate range (%)
     # Initializing figure
-    fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=300)
+    fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=400)
     datalim = None
     map = Basemap(llcrnrlon=100.3, llcrnrlat=13.4, urcrnrlon=100.8, urcrnrlat=14,
                   resolution="h", ellps="WGS84", lat_0=13.6, lon_0=100.4)
@@ -474,13 +489,13 @@ def sub_rmse_map(path, wellnestlist, all_results,
     # If saving figure
     if save == 1:
 
-        fig_name1 = "Map_Sub_RMSE%_" + tmin + "_" + tmax + "_50_2020.eps"
+        fig_name1 = "Map_Sub_RMSEperc_" + tmin + "_" + tmax + "_50_2020.eps"
         full_figpath = os.path.join(path, fig_name1)
-        plt.savefig(full_figpath, dpi=300, bbox_inches="tight", format="eps")
+        plt.savefig(full_figpath, dpi=400, bbox_inches="tight", format="eps")
 
-        fig_name1 = "Map_Sub_RMSE%_" + tmin + "_" + tmax + "_50_2020.png"
+        fig_name1 = "Map_Sub_RMSEperc_" + tmin + "_" + tmax + "_50_2020.png"
         full_figpath = os.path.join(path, fig_name1)
-        plt.savefig(full_figpath, dpi=300, bbox_inches="tight", format="png")
+        plt.savefig(full_figpath, dpi=400, bbox_inches="tight", format="png")
 
 
 def sub_sens_line(path, wellnestlist, all_results,
@@ -504,7 +519,7 @@ def sub_sens_line(path, wellnestlist, all_results,
 
     ASSUMES FOUR WELLS IN WELLNEST
     """
-    plt.figure(figsize=(6.75, 3.38), dpi=300)
+    plt.figure(figsize=(6.75, 3.38), dpi=400)
     color1 = mcp.gen_color(cmap="rainbow", n=num)
 
     # Coeff for sensitivity percentage and plotting colors
@@ -523,10 +538,35 @@ def sub_sens_line(path, wellnestlist, all_results,
         # Figures for each well nest
         for num_well, wellnest in enumerate(wellnestlist):
 
-            plt.plot(annual_data[i][num_well][1].index,
-                     annual_data[i][num_well][1].CumTotSum*-100,
-                     label=str(coeff) + "%", linewidth=1,
-                     color=color1[i])
+            # If plotting for everything except elastic specific storage for sand
+            if mode != "Sske_sand":
+
+                plt.plot(annual_data[i][num_well][1].index,
+                         annual_data[i][num_well][1].CumTotSum*-100,
+                         label=str(coeff) + "%", linewidth=1,
+                         color=color1[i])
+
+            # if plotting for elastic specific storage for sand
+            else:
+
+                # For 50-140% sensitivity
+                if i != (num - 1):
+
+                    plt.plot(annual_data[i][num_well][1].index,
+                             annual_data[i][num_well][1].CumTotSum*-100,
+                             label=str(coeff) + "%", linewidth=1,
+                             color=color1[i])
+
+                # For the plot for 150%, sensitivity analysis for if elastic
+                # specific storage for sand is equal to elastic specific storage
+                # for clay
+                else:
+
+                    plt.plot(annual_data[i][num_well][1].index,
+                             annual_data[i][num_well][1].CumTotSum*-100,
+                             label="Clay Sske Values", linewidth=1,
+                             color=color1[i])
+
             lastrate = (annual_data[i][num_well][1].CumTotSum[-1] -
                         annual_data[i][num_well][1].CumTotSum[-2])*-1000  # mm
             lastrates.append(lastrate)
@@ -546,7 +586,12 @@ def sub_sens_line(path, wellnestlist, all_results,
         coeff += 10
         color_coeff -= .1
 
-    if mode == "Sske":
+    print("Cum sub in time period relative to total sub (%): " +
+          str((annual_data[0][num_well][1].CumTotSum[-1] -
+               annual_data[-1][num_well][1].CumTotSum[-1]) * -100 /
+              (annual_data[5][num_well][1].CumTotSum[-1])))
+
+    if "Sske" in mode:
 
         # Y location of text
         yloc = 170
@@ -560,7 +605,7 @@ def sub_sens_line(path, wellnestlist, all_results,
                  xy=(360, 190),
                  xycoords="axes points",
                  color="k",
-                 fontsize=8,
+                 fontsize=6,
                  weight="bold")
 
     # Different positionings of text
@@ -569,9 +614,9 @@ def sub_sens_line(path, wellnestlist, all_results,
         plt.annotate("{:.1f}".format(change2020_2060[i]),
                      xy=(380, yloc),
                      xycoords="axes points",
-                     color=color1[i])
+                     color=color1[i], fontsize=5, weight="bold")
 
-        if mode == "Sske":
+        if "Sske" in mode:
 
             # Y location of text
             yloc -= 10
@@ -586,6 +631,7 @@ def sub_sens_line(path, wellnestlist, all_results,
     plt.ylabel("Cumulative Subsidence (cm)")
     plt.xlabel("Years")
     plt.title(wellnest)
+    plt.gcf().set_size_inches(6.75, 3.38)
 
     # Title and figure name changes based on mode
     # Inelastic specific storage
@@ -599,10 +645,21 @@ def sub_sens_line(path, wellnestlist, all_results,
         fig_name2 = wellnest + "_CumSubTotal_SENS_" + \
             mode + ".png"
 
-    # Elastic specific storage
-    elif mode == "Sske":
+    # Elastic specific storage for clay
+    elif mode == "Sske_clay":
 
-        plt.title("Elastic Specific Storage\nSensitivity Analysis")
+        plt.title("Clay Elastic Specific Storage\nSensitivity Analysis")
+
+        fig_name1 = wellnest + "_CumSubTotal_SENS_" + \
+            mode + ".eps"
+
+        fig_name2 = wellnest + "_CumSubTotal_SENS_" + \
+            mode + ".png"
+
+    # Elastic specific storage for clay
+    elif mode == "Sske_sand":
+
+        plt.title("Sand Elastic Specific Storage\nSensitivity Analysis")
 
         fig_name1 = wellnest + "_CumSubTotal_SENS_" + \
             mode + ".eps"
@@ -636,10 +693,10 @@ def sub_sens_line(path, wellnestlist, all_results,
     if save == 1:
 
         full_figpath = os.path.join(path, fig_name1)
-        plt.savefig(full_figpath, dpi=300, format="eps")
+        plt.savefig(full_figpath, dpi=400, format="eps")
 
         full_figpath = os.path.join(path, fig_name2)
-        plt.savefig(full_figpath, dpi=300, format="png")
+        plt.savefig(full_figpath, dpi=400, format="png")
 
 
 def sub_forecast(path, wellnestlist, all_ann_subs, save=0):
@@ -678,7 +735,7 @@ def sub_forecast(path, wellnestlist, all_ann_subs, save=0):
     for num_well, wellnest in enumerate(wellnestlist):
 
         # Figure plotting model results forecast for each scenario
-        fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=300)
+        fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=400)
 
         # -1000 is to convert to mm and negative because subsidence is positive
         # while uplift is negative
@@ -763,6 +820,7 @@ def sub_forecast(path, wellnestlist, all_ann_subs, save=0):
         plt.ylabel("Cumulative Subsidence (cm)")
         plt.xlabel("Years")
         plt.title(wellnest)
+        fig.set_size_inches(3.2, 2.2)
         ax.yaxis.set_minor_locator(AutoMinorLocator(2))
         plt.grid(True, linestyle=(0, (1, 10)), which="minor")
         plt.grid(True, linestyle="dashed", which="major")
@@ -791,32 +849,37 @@ def sub_forecast(path, wellnestlist, all_ann_subs, save=0):
             plt.savefig(full_figpath, bbox_inches="tight",
                         format="eps")
 
+            fig_name = wellnest + "_CumSubForecast_ALLPUMP.png"
+            full_figpath = os.path.join(path, fig_name)
+            plt.savefig(full_figpath, bbox_inches="tight",
+                        format="png")
+
     # Printing statistics
-    print("\n500,000 scenario min, avg, max, med: " +
+    print("\n500,000 scenario min, avg, max, med 2060 rate mm/yr: " +
           f"{min(ann_2060_500):.4f}" + ", " +
           f"{np.average(ann_2060_500):.4f}" + ", " +
           f"{max(ann_2060_500):.4f}" + ", " +
           f"{median(ann_2060_500):.4f}")
 
-    print("\n250,000 scenario min, avg, max, med: " +
+    print("\n250,000 scenario min, avg, max, med 2060 rate mm/yr: " +
           f"{min(ann_2060_250):.4f}" + ", " +
           f"{np.average(ann_2060_250):.4f}" + ", " +
           f"{max(ann_2060_250):.4f}" + ", " +
           f"{median(ann_2060_250):.4f}")
 
-    print("\nDelayed250,000 scenario min, avg, max, med: " +
+    print("\nDelayed250,000 scenario min, avg, max, med 2060 rate mm/yr: " +
           f"{min(ann_2060_d250):.4f}" + ", " +
           f"{np.average(ann_2060_d250):.4f}" + ", " +
           f"{max(ann_2060_d250):.4f}" + ", " +
           f"{median(ann_2060_d250):.4f}")
 
-    print("\n1,000,000 scenario min, avg, max, med: " +
+    print("\n1,000,000 scenario min, avg, max, med 2060 rate mm/yr: " +
           f"{min(ann_2060_1000):.4f}" + ", " +
           f"{np.average(ann_2060_1000):.4f}" + ", " +
           f"{max(ann_2060_1000):.4f}" + ", " +
           f"{median(ann_2060_1000):.4f}")
 
-    print("\nNo pumping scenario min, avg, max, med: " +
+    print("\nNo pumping scenario min, avg, max, med 2060 rate mm/yr: " +
           f"{min(ann_2060_0):.4f}" + ", " +
           f"{np.average(ann_2060_0):.4f}" + ", " +
           f"{max(ann_2060_0):.4f}" + ", " +
@@ -845,6 +908,8 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
     fig_path - figure to save path
     """
     # Plotting map
+    fig.set_size_inches(3.2, 2.2)
+
     # Land as green and ocean as blue
     # Drawing coastline
     map.drawcoastlines(zorder=2, linewidth=1)
@@ -861,9 +926,9 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
 
     # draw parallels and meridians
     map.drawparallels(np.arange(12.5, 14, .5), labels=[1, 0, 0, 0],
-                      fontsize=5)
-    map.drawmeridians(np.arange(99.5, 101.5, .25), labels=[0, 0, 0, 1],
-                      fontsize=5)
+                      fontsize=4)
+    map.drawmeridians(np.arange(99.5, 101.5, .25), labels=[0, 0, 1, 0],
+                      fontsize=4)
 
     # Drawing Pastas/subsidence datapoints
     x, y = map(xs, ys)
@@ -911,7 +976,8 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
 
         # Colorbar
 
-        cb = fig.colorbar(p, ax=ax)
+        cb = fig.colorbar(p, ax=ax, location="bottom", shrink=0.5, pad=0.05,
+                          ticks=mticker.MultipleLocator(10))
         cb.ax.tick_params(labelsize=6)
         cb.set_label("Normalized RMSE", fontsize=7)
         plt.set_cmap("coolwarm")
@@ -952,7 +1018,7 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
 
         plt.legend([WedgeObject()], ["BK PD\nNB NL"],
                    handler_map={WedgeObject: WedgeObjectHandler()},
-                   fontsize=5)
+                   fontsize=5, loc="upper left")
 
         # Title
         avgRMSE = pd.concat([cs["NB"].cs, cs["NL"].cs, cs["PD"].cs,
@@ -1005,7 +1071,8 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         ax.add_collection(p)
 
         # Colorbar
-        cb = fig.colorbar(p, ax=ax)
+        cb = fig.colorbar(p, ax=ax, location="bottom", shrink=0.5, pad=0.05,
+                          ticks=mticker.MultipleLocator(5))
         cb.ax.tick_params(labelsize=6)
         cb.set_label("Years", fontsize=7)
         cb.mappable.set_clim(vmin=datalim[0],
@@ -1045,16 +1112,17 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
 
         plt.legend([Wedge_obj()], ["BK PD\nNB NL"],
                    handler_map={Wedge_obj: WedgeHandler()},
-                   fontsize=5)
+                   fontsize=5, loc="upper left")
 
     elif mode == "Sub_RMSE":
 
-        map.scatter(x, y, s=50,
+        map.scatter(x, y, s=30,
                     c=np.multiply(cs, 1), zorder=3,
                     marker="o", edgecolor="k",
                     cmap="RdYlBu_r", linewidth=.75)
         plt.clim(datalim)
-        cb = plt.colorbar()
+        cb = plt.colorbar(location="bottom", shrink=0.5, pad=0.05,
+                          ticks=mticker.MultipleLocator(1))
         cb.ax.tick_params(labelsize=6)
         cb.set_label("RMSE (cm/year)", fontsize=7)
         # plt.title("RMSE between \nSimulated and Observed Subsidence",
@@ -1065,17 +1133,18 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
     # RMSE of subsidence simulation as a % of the total observation
     elif mode == "Sub_RMSE%":
 
-        map.scatter(x, y, s=50,
+        map.scatter(x, y, s=30,
                     c=np.multiply(cs, 1), zorder=3,
                     marker="o", edgecolor="k",
                     cmap="RdYlBu_r", linewidth=.75)
         plt.clim(datalim)
-        cb = plt.colorbar()
+        cb = plt.colorbar(location="bottom", shrink=0.5, pad=0.05,
+                          ticks=mticker.MultipleLocator(100))
         cb.ax.tick_params(labelsize=6)
         cb.set_label("Normalized RMSE", fontsize=7)
         cb.solids.set_rasterized(False)
         print("Average NormRMSE for all well nests: " +
-              str("%1.f" % np.average(cs)) + "%")
+              str("%1.f" % np.average(cs[cs<100])) + "%")
 
         plt.show()
 
@@ -1116,7 +1185,7 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         plt.show()
 
     # Forecasting subsidence for all wells
-    elif mode == 'Sub_Forecast_Map':
+    elif mode == "Sub_Forecast_Map":
 
         # Angle of wedges
         theta1 = 90
@@ -1154,10 +1223,12 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         ax.add_collection(p)
 
         # Colorbar
-        cb = fig.colorbar(p, ax=ax)
+        plt.set_cmap("viridis")
+        cb = fig.colorbar(p, ax=ax, location="bottom", shrink=0.5, pad=0.05,
+                          ticks=mticker.MultipleLocator(5))
         cb.ax.tick_params(labelsize=6)
         cb.set_label("Cumulative Subsidence (cm)", fontsize=7)
-        plt.set_cmap("coolwarm")
+        plt.set_cmap("viridis")
         cb.mappable.set_clim(vmin=datalim[0],
                              vmax=datalim[1])
         cb.solids.set_rasterized(False)
@@ -1200,7 +1271,7 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
                    ["        500,000    250,000\nNo Pumping          1,000,000\n" +
                     "         Delayed 250,000"],
                    handler_map={WedgeObject: WedgeObjectHandler()},
-                   fontsize=4, loc='lower left')
+                   fontsize=4, loc="lower left")
 
         plt.show()
 
@@ -1210,7 +1281,7 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
     if save == 1:
         fig_name1 = aq + "_" + mode + "_" + time_min + "_" + time_max + "_maps.eps"
         full_figpath = os.path.join(figpath, fig_name1)
-        plt.savefig(full_figpath, dpi=300, bbox_inches="tight", format="eps")
+        plt.savefig(full_figpath, dpi=400, bbox_inches="tight", format="eps")
 
 
 def sub_forecast_map(path, wellnestlist, all_ann_subs,
@@ -1238,7 +1309,7 @@ def sub_forecast_map(path, wellnestlist, all_ann_subs,
     gwwell_locs = pd.read_excel(full_GWpath)
 
     # Locations of wellnests; removing duplicates
-    gwwell_locs = gwwell_locs.drop_duplicates('WellNest_Name', keep='first')
+    gwwell_locs = gwwell_locs.drop_duplicates("WellNest_Name", keep="first")
 
     # Preallocation
     # Empty dictionary
@@ -1279,24 +1350,24 @@ def sub_forecast_map(path, wellnestlist, all_ann_subs,
         d_dict[num_scenario] = pd.DataFrame({"x": xs, "y": ys, "cs": cs})
 
     # Initializing figure
-    fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=300)
+    fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=400)
     datalim = [-5, 35]
     map = Basemap(llcrnrlon=100.3, llcrnrlat=13.4, urcrnrlon=100.8, urcrnrlat=14,
-                  resolution='h', ellps='WGS84', lat_0=13.6, lon_0=100.4)
+                  resolution="h", ellps="WGS84", lat_0=13.6, lon_0=100.4)
     draw_basemap(map, xs, ys, d_dict, fig=fig, ax=ax,
-                 datalim=datalim, mode='Sub_Forecast_Map', save=0,
+                 datalim=datalim, mode="Sub_Forecast_Map", save=0,
                  time_min=tmin, time_max=tmax, figpath=path)
 
     # If saving figure
     if save == 1:
 
-        fig_name1 = 'Map_CumSub_' + tmin + '_' + tmax + '_ALLPump.eps'
+        fig_name1 = "Map_CumSub_" + tmin + "_" + tmax + "_ALLPump.eps"
         full_figpath = os.path.join(path, fig_name1)
-        plt.savefig(full_figpath, dpi=300, bbox_inches='tight', format='eps')
+        plt.savefig(full_figpath, dpi=400, bbox_inches="tight", format="eps")
 
-        fig_name1 = 'Map_CumSub_' + tmin + '_' + tmax + '_ALLPump.png'
+        fig_name1 = "Map_CumSub_" + tmin + "_" + tmax + "_ALLPump.png"
         full_figpath = os.path.join(path, fig_name1)
-        plt.savefig(full_figpath, dpi=300, bbox_inches='tight', format='png')
+        plt.savefig(full_figpath, dpi=400, bbox_inches="tight", format="png")
 
 
 ###############################################################################
@@ -1325,16 +1396,18 @@ def Pastas_results(models, Wellnest_name, well_names,
     """
     # For each well in well names, determine order
     # Which well to start with because want BK, PD, NL, NB order
-    order = [well_names.index(x) for y in ['BK', 'PD', 'NL', 'NB']
+    order = [well_names.index(x) for y in ["BK", "PD", "NL", "NB"]
              for x in well_names if y in x]
 
     # Creating figure
-    fig = plt.figure(figsize=(5, 5), dpi=300)
-    fig.suptitle(Wellnest_name)  # Figure title
+    fig = plt.figure(figsize=(5, 5), dpi=400)
+    # fig.suptitle(Wellnest_name)  # Figure title
 
     # Adding subfigures
     gs = fig.add_gridspec(ncols=1, nrows=len(order)+1,
-                          width_ratios=[.25])
+                          width_ratios=[.5])
+
+    gs.update(wspace=0.025, hspace=0.4)
 
     # Axes
     axes = []
@@ -1407,9 +1480,9 @@ def Pastas_results(models, Wellnest_name, well_names,
         ax1.tick_params(axis="both", which="major", pad=0)
         # ax1.set_title(well_name, fontsize=6)
         ax1.set(xlabel=None)
-        ax1.xaxis.set_ticks_position('none')
+        ax1.xaxis.set_ticks_position("none")
         ax1.annotate(well_name,
-                     xy=(-.1, 1), xycoords="axes fraction",
+                     xy=(-.1, 1.1), xycoords="axes fraction",
                      fontsize=8, horizontalalignment="center",
                      weight="bold",
                      bbox=dict(boxstyle="round", fc="0.8"),
@@ -1432,12 +1505,12 @@ def Pastas_results(models, Wellnest_name, well_names,
         response.plot(ax=axb)
         title = "Step response"
         axb.tick_params(axis="both", which="major", pad=0)
-        axb.set_xlabel("Days", fontsize=6, labelpad=-5)
-        axb.set_ylabel("Head", fontsize=6, labelpad=-5)
-        axb.xaxis.set_label_coords(.28, -.5)
-        axb.yaxis.set_label_coords(-.48, .2)
-        axb.set_title(title, fontsize=6, pad=0)
-        axb.tick_params(labelsize=6)
+        axb.set_xlabel("Days", fontsize=5, labelpad=-5)
+        axb.set_ylabel("Head", fontsize=5, labelpad=-5)
+        axb.xaxis.set_label_coords(.23, -.4)
+        axb.yaxis.set_label_coords(-.38, .2)
+        axb.set_title(title, fontsize=5, pad=0)
+        axb.tick_params(labelsize=5)
         axb.set_xlim(rmin, rmax)
 
         # If last well
@@ -1476,6 +1549,8 @@ def Pastas_results(models, Wellnest_name, well_names,
 
         plt.subplots_adjust(right=0.95)
 
+    fig.set_size_inches(5, 5)
+
     # To save figure
     if save == 1:
         # Fig name
@@ -1484,7 +1559,7 @@ def Pastas_results(models, Wellnest_name, well_names,
         # Fig path
         full_figpath = os.path.join(figpath, fig_name3)
         # Save fig
-        plt.savefig(full_figpath, dpi=300, bbox_inches="tight",
+        plt.savefig(full_figpath, dpi=400, bbox_inches="tight",
                     format="png")
 
         # Fig name
@@ -1493,5 +1568,5 @@ def Pastas_results(models, Wellnest_name, well_names,
         # Fig path
         full_figpath = os.path.join(figpath, fig_name3)
         # Save fig
-        plt.savefig(full_figpath, dpi=300, bbox_inches="tight",
+        plt.savefig(full_figpath, dpi=400, bbox_inches="tight",
                     format="eps")

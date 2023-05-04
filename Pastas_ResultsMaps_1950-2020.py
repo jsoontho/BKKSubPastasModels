@@ -1,5 +1,6 @@
 # ##############################################################################
-"""Plotting spatial results from Pastas models for different wells in Bangkok, Thailand.
+"""Plotting spatial results from Pastas models for different wells in Bangkok,
+Thailand.
 
 A well nest may have 1-4 wells
 Outputs: Spatial maps
@@ -126,17 +127,15 @@ for Wellnest_name in files:
             print("No model for " + Wellnest_name + "_" + well_name)
             continue
 
-        # Noise model
-        noise = model.noise()
-
-        # Runs test
-        # stat, p = ps.stats.runs_test(noise)
-
         # Saving rmse
         # Normalizing RMSE to max-min of data
         max_obs = max(model.observations().dropna())
         min_obs = min(model.observations().dropna())
-        rmse_rel = model.stats.rmse(tmin=time_min, tmax=time_max)/(max_obs-min_obs)
+        med_obs = np.median(model.observations().dropna())
+        # q75, q25 = np.percentile(model.observations().dropna(), [75, 25])
+        # rmse_rel = model.stats.rmse(tmin=time_min, tmax=time_max)/(max_obs-min_obs)
+        rmse_rel = model.stats.rmse(tmin=time_min, tmax=time_max)/(-med_obs)
+        # rmse_rel = model.stats.rmse(tmin=time_min, tmax=time_max)/(q75 - q25)
 
         # Saving relative rmse
         rmse.append(Wellnest_name)

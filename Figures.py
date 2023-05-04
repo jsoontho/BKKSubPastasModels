@@ -38,7 +38,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 # Plotting settings
 ###############################################################################
 
-plt.rc("font", size=10)  # controls default text size
+plt.rc("font", size=8)  # controls default text size
 plt.rc("axes", titlesize=10)  # fontsize of the title
 plt.rc("axes", labelsize=6)  # fontsize of the x and y labels
 plt.rc("xtick", labelsize=6)  # fontsize of the x tick labels
@@ -61,7 +61,7 @@ sheet = "EstTotalPump_54-60_IntF0"
 pump_0 = pd.read_excel(full_path, sheet_name=sheet)
 
 # Plotting
-fig, axs = plt.subplots(3, 1, figsize=(3.2, 6.4), dpi=300)
+fig, axs = plt.subplots(3, 1, figsize=(3.2, 7), dpi=300)
 axs[0].plot(pump_50.Date, pump_50.Pump2, linewidth=1.5, label="500,000 m$^3$/day",
             color="hotpink")
 axs[0].plot(pump_50.Date, pump_25.Pump2, linewidth=1.5, label="250,000 m$^3$/day",
@@ -78,7 +78,7 @@ axs[0].plot(pump_50.Date[:24472], pump_50.Pump2[:24472], linewidth=1.5, color="k
             label="Historic Pumping")
 axs[0].legend()
 axs[0].grid(True, linestyle="dotted")
-axs[0].set_xlim([datetime.date(1978, 1, 1), datetime.date(2059, 12, 31)])
+axs[0].set_xlim([datetime.date(1978, 1, 1), datetime.date(2060, 1, 1)])
 plt.setp(axs[0].get_xticklabels(), visible=False)
 axs[0].set_ylabel("Pumping Rate\n(m$^3$/day)")
 
@@ -358,8 +358,6 @@ for num_well, wellnest in enumerate(wellnestlist):
     # annotation
     ax2.text(cum_value_2000.index, cum_value_2000[0] - 4, "2000: " +
              f"{ann_value_1990[0]:.1f}" + " mm/yr", fontsize=6)
-    plt.tight_layout()
-    plt.show()
 
 axs[1] = ax1
 axs[2] = ax2
@@ -370,6 +368,10 @@ for index, ax in enumerate(axs):
     ax.text(-.2, 1.0, string.ascii_lowercase[index] + ")",
             transform=ax.transAxes,
             size=10, weight='bold')
+
+fig.set_size_inches(3.2, 6.4)
+plt.subplots_adjust(hspace=.1)
+plt.show()
 
 # Saving
 path = "figures"

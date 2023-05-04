@@ -43,12 +43,12 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 # Plotting settings
 ###############################################################################
 
-plt.rc('font', size=12)  # controls default text size
-plt.rc('axes', titlesize=12)  # fontsize of the title
-plt.rc('axes', labelsize=8)  # fontsize of the x and y labels
-plt.rc('xtick', labelsize=8)  # fontsize of the x tick labels
-plt.rc('ytick', labelsize=8)  # fontsize of the y tick labels
-plt.rc('legend', fontsize=8)  # fontsize of the legend
+plt.rc('font', size=10)  # controls default text size
+plt.rc('axes', titlesize=10)  # fontsize of the title
+plt.rc('axes', labelsize=7)  # fontsize of the x and y labels
+plt.rc('xtick', labelsize=7)  # fontsize of the x tick labels
+plt.rc('ytick', labelsize=7)  # fontsize of the y tick labels
+plt.rc('legend', fontsize=6)  # fontsize of the legend
 
 # %%###########################################################################
 # Pastas settings
@@ -250,7 +250,7 @@ for Wellnest_name in files:
                 print("Running....")
 
                 # If noise model True
-                if noise_TF == True:
+                if noise_TF:
 
                     # First run is not with noise model
                     # Gets first parameter estimates

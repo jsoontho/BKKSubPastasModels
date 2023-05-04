@@ -11,17 +11,15 @@ Jenny Soonthornrangsan
 ###############################################################################
 
 # import statements
-import os
 import pandas as pd
 import numpy as np
 import datetime
 import matplotlib.pyplot as plt
 import datetime as dt
-from matplotlib.collections import PatchCollection
-from matplotlib.patches import Wedge
 
 # Closing all figures
 plt.close('all')
+
 
 ###############################################################################
 ###############################################################################
@@ -32,7 +30,8 @@ plt.close('all')
 # Assuming excel format
 def GW_Data_Process(GW_Data, well_name=None):
     # # Inputs:
-    # GW data assuming as dataframe and first five lines irrevelevant with - to be replaced with nan
+    # GW data assuming as dataframe and first five lines irrevelevant with - to be
+    # replaced with nan
     # Thai years need to be converted to english years
     # Well name - if None, returning all wells with same dates
     # # Outputs:
@@ -41,7 +40,7 @@ def GW_Data_Process(GW_Data, well_name=None):
 
     # Ignoring first five lines
     # Replacing no date (-) with nans
-    data = GW_Data.iloc[0:len(GW_Data)-5, :];
+    data = GW_Data.iloc[0:len(GW_Data)-5, :]
     data = data.replace('-', np.nan)
 
     # Creating data frame
@@ -66,15 +65,16 @@ def GW_Data_Process(GW_Data, well_name=None):
         if date[0:2] == '29' and date[3:5] == '02':
 
             # Thai years - 543 = english years
-            df_data.Year.loc[i] = int(date[6:10]) - 543;
+            df_data.Year.loc[i] = int(date[6:10]) - 543
             df_data.Month.loc[i] = int(date[3:5])
             df_data.Day.loc[i] = int(date[0:2])
 
             # Converting to date time format
-            date_list.append(dt.datetime.strptime(str(df_data.Day.loc[i]).replace(".0", "") + "/" \
-                                                  + str(df_data.Month.loc[i]).replace(".0", "") + \
-                                                  "/" + str(df_data.Year.loc[i]).replace(".0", ""), \
-                                                  "%d/%m/%Y").date());
+            date_list.append(dt.datetime.strptime(str(df_data.Day.loc[i]).replace(
+                ".0", "") + "/"
+                    + str(df_data.Month.loc[i]).replace(".0", "") +
+                    "/" + str(df_data.Year.loc[i]).replace(".0", ""),
+                    "%d/%m/%Y").date())
 
         # If not a leap date
         else:
@@ -86,16 +86,16 @@ def GW_Data_Process(GW_Data, well_name=None):
             df_data.Day.loc[i] = (date_list[i].day)
 
     # Saving new english date
-    df_data['EngDate'] = pd.to_datetime(df_data[['Year', 'Month', 'Day']]);
+    df_data['EngDate'] = pd.to_datetime(df_data[['Year', 'Month', 'Day']])
 
     # If individual well name given
-    if well_name != None:
+    if well_name is not None:
 
         # Subset of dataframe to get ready for Pastas
         # DTW data converted to approximate head using negative sign
         head_subsetdata = {'Date': df_data.EngDate,
-                'Head': - df_data[well_name].astype("float")}
-        Head_Data = pd.DataFrame(head_subsetdata, columns = ['Date', 'Head'])
+                           'Head': - df_data[well_name].astype("float")}
+        Head_Data = pd.DataFrame(head_subsetdata, columns=['Date', 'Head'])
         Head_Data.index = pd.to_datetime(Head_Data.Date)
 
     # If individual head date not given
@@ -104,12 +104,14 @@ def GW_Data_Process(GW_Data, well_name=None):
 
     # Cleaning all data up
     # Returning head data not depth to water!
-    all_data = pd.concat([df_data['EngDate'], -well_data.iloc[:, 1:].astype("float")], axis=1,\
-                        keys=['Date'] + well_data.columns.values[1:])
+    all_data = pd.concat([df_data['EngDate'], -well_data.iloc[:, 1:].astype(
+        "float")], axis=1,
+        keys=['Date'] + well_data.columns.values[1:])
     if (np.size(-well_data.iloc[:, 1:], axis=1)) > 1:
         all_data = all_data.droplevel(level=0, axis=1)
 
     return all_data, Head_Data
+
 
 ###############################################################################
 ###############################################################################
@@ -139,7 +141,7 @@ def is_outlier(points, thresh=3.5):
         Statistical Techniques, Edward F. Mykytka, Ph.D., Editor.
     """
     if np.size(points) == 1:
-        points = points[:,None]
+        points = points[:, None]
     median = np.median(points)
     diff = (points - median)**2
     diff = np.sqrt(diff)

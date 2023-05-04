@@ -59,7 +59,7 @@ def bkk_wellnest_preproc(wellnestname, tmin, tmax, proxyflag):
         raise ValueError("\nWell nest or file for well nest does not exist.")
 
     # List of wells in well nest
-    welllist = data.columns[-(len(data.columns)-2):]
+    welllist = data.columns[-(len(data.columns) - 2):]
 
     # Reorder well list to shallow to deep aquifers
     # BK, PD, NL, NB
@@ -420,7 +420,7 @@ class SolveFDM:
         # Inner nodes that border the aquifer
         # First inner node near top aquifer
         # If not top clay layer, the top is an aquifer
-        if self.toplay == False:
+        if self.toplay is False:
             Adiag_val[0] = (-3 * self.Kv / self.dz) - (self.dz / self.dt * Ss[1])
 
         # If top clay layer, the top is a noflow boundary
@@ -461,7 +461,7 @@ class SolveFDM:
                                                      h_matr[i+1, self.n-1]))
 
         # If not top clay layer, the top is an aquifer
-        if self.toplay == False:
+        if self.toplay is False:
             # First inner node near top aquifer
             b[0] = (self.dz/self.dt) * (-Ss[1] * self.precon[1] +
                                         self.Sske * (self.precon[1] -
@@ -717,12 +717,15 @@ def calc_deformation(timet, headt, headb, Kv, Sskv, Sske, Sske_sandt,
     # Interpolated head minus initial
     boundary0_b = boundaryb - boundaryb[0]
 
-    # If adding deformation from sand, all ELASTIC
-    deformation = deformation + boundary0_t * Ske_sandt + \
-        boundary0_b * Ske_sandb
+    # Sand deformation (top and bottom aquifer)
+    # All elastic
+    sanddef = boundary0_t * Ske_sandt + boundary0_b * Ske_sandb
+
+    # If adding deformation from sand
+    deformation = deformation + sanddef
 
     # Returning
-    return(t, deformation, boundaryt, boundaryb, deformation_v, h)
+    return (t, deformation, boundaryt, boundaryb, deformation_v, h)
 
 
 # %%###########################################################################
@@ -817,7 +820,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
 
     # If running transient simulation before model run
     # to get clay heads to where they need to be
-    if ic_run == True:
+    if ic_run:
 
         SS_path = os.path.join(os.path.abspath("inputs"),
                                "SS_Head_GWWellLocs.xlsx")
@@ -1431,7 +1434,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
 
             # If running transient simulation before model run
             # to get clay heads to where they need to be
-            if ic_run == True:
+            if ic_run:
 
                 # Create daily time series
                 df = pd.DataFrame(index=pd.date_range('1950-01-01',
@@ -1656,7 +1659,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
 
             # If running transient simulation before model run
             # to get clay heads to where they need to be
-            if ic_run == True:
+            if ic_run:
 
                 # Calculates sub
                 # Returns interpolated t, cum sub total, interp top head, bot
@@ -1704,7 +1707,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
 
             # If running transient simulation before model run
             # to get clay heads to where they need to be
-            if ic_run == True:
+            if ic_run:
 
                 # Saves heads in clay nodes, z distribution
                 # time original (original time series (0:len(date))), date

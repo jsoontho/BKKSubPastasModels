@@ -160,9 +160,6 @@ bkk_sub_gw.bkk_plotting.sub_rmse_map(path, wellnestlist, all_results,
 # Plots Results: Sensitivity Analysis
 ##############################################################################
 
-tmin = "1978"
-tmax = "2060"
-
 # Mode can be "raw" as in raw groundwater data vs "Pastas" for importing Pastas
 # simulated groundwater in the aquifers
 mode = "Pastas"
@@ -194,20 +191,24 @@ proxyflag = 1
 wellnest_sens = ["LCBKK013"]
 
 # Sensitivity analysis
-# Increasing by 10%
-coeff = .5
-num = 11  # Num of increases in percentage
-sens_modes = ["Sske", "thick", "Sskv", "K"]
-
-# Preallocation
-# All results from every sensitivity
-sens_results = []
-sens_sub = []
-sens_subv = []
-sens_ann = []
+sens_modes = ["Sske_clay", "thick", "Sskv", "K", "Sske_sand"]
 
 # For each sensitivity parameter set
 for sens_mode in sens_modes:
+
+    tmin = "1978"
+    tmax = "2060"
+
+    # Increasing by 10%
+    coeff = .5
+    num = 11  # Num of increases in percentage
+
+    # Preallocation
+    # All results from every sensitivity
+    sens_results = []
+    sens_sub = []
+    sens_subv = []
+    sens_ann = []
 
     # For each parameter increase
     for i in range(num):
@@ -232,10 +233,24 @@ for sens_mode in sens_modes:
 
             Sskv_data = Sskv_data.iloc[:, :9] * coeff
 
-        # Elastic specific storage
-        elif sens_mode == "Sske":
+        # Elastic specific storage for clay
+        elif sens_mode == "Sske_clay":
 
-            Sske_data = Sske_data.iloc[:, :9] * coeff
+            Sske_data.iloc[:, 0:9:2] = Sske_data.iloc[:, 0:9:2] * coeff
+
+        # Elastic specific storage for sand
+        elif sens_mode == "Sske_sand":
+
+            # If not the last sens
+            if i != (num - 1):
+
+                Sske_data.iloc[:, 1:10:2] = Sske_data.iloc[:, 1:10:2] * coeff
+
+            # If last sens, setting sand elastic storage to clay which is typically
+            # one order of magnitude higher
+            else:
+
+                Sske_data.iloc[:, 1:10:2] = Sske_data.iloc[:, 0:9:2]
 
         # Vertical hydraulic conductivity
         elif sens_mode == "K":
