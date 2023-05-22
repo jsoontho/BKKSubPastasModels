@@ -128,18 +128,11 @@ for Wellnest_name in files:
             continue
 
         # Saving rmse
-        # Normalizing RMSE to max-min of data
-        max_obs = max(model.observations().dropna())
-        min_obs = min(model.observations().dropna())
-        med_obs = np.median(model.observations().dropna())
-        # q75, q25 = np.percentile(model.observations().dropna(), [75, 25])
-        # rmse_rel = model.stats.rmse(tmin=time_min, tmax=time_max)/(max_obs-min_obs)
-        rmse_rel = model.stats.rmse(tmin=time_min, tmax=time_max)/(-med_obs)
-        # rmse_rel = model.stats.rmse(tmin=time_min, tmax=time_max)/(q75 - q25)
+        rmse_ = model.stats.rmse(tmin=time_min, tmax=time_max)
 
         # Saving relative rmse
         rmse.append(Wellnest_name)
-        rmse.extend((well_name, rmse_rel))
+        rmse.extend((well_name, rmse_))
 
         # Saving pumping step response tmax
         res_tmax.append(Wellnest_name)
@@ -152,10 +145,9 @@ for Wellnest_name in files:
                           model.observations().min()))
 
 # %%###########################################################################
-# Relative RMSE Plotting
+# RMSE Plotting
 ###############################################################################
 # Output: One graph, 2D plot with color indicator of RMSE for all 4 aq
-# RMSE is relative RMSE (relative to observation range)
 
 # Importing spatial coordinates
 full_path = os.path.join(tot_path, 'GroundwaterWellLocs.xls')
@@ -223,25 +215,23 @@ for aq in aqs:
             # If well nest has a well in the aquifer
             else:
 
-                # Saving data
+                # Saving loc data
                 xs.append(x)
                 ys.append(y)
 
-                # Relative RMSE multiplied by 100 and saved as %
-                cs.append(well_data[well_data.index(label[0])+2]*100)
+                # Saving RMSE
+                cs.append(well_data[well_data.index(label[0])+2])
 
     # Creates a dictionary with location and relative RMSE value
     d_dict[aq] = pd.DataFrame({"x": xs, "y": ys, "cs": cs})
 
 # Initializing figure
-fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=300)
+fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=400)
 
 # Plotting settings
 # Setting the same color bar limits for all four wells
-# Setting relative RMSE as a percentage; hence multiplying by 100
-data_temp = np.multiply([e for e in rmse if isinstance(e, float)], 100)
-data_lim = [min(np.array(data_temp)[~mfs.is_outlier(data_temp, 3.5)]),
-            max(np.array(data_temp)[~mfs.is_outlier(data_temp, 3.5)])]
+data_lim = [min(np.array(cs)[~mfs.is_outlier(cs, 3.5)]),
+            max(np.array(cs)[~mfs.is_outlier(cs, 3.5)])]
 
 plt.set_cmap("coolwarm")  # Color map settings
 
@@ -255,7 +245,6 @@ bkk_sub_gw.bkk_plotting.draw_basemap(map, xs, ys, d_dict, fig=fig, ax=ax,
                                      aq=aq, perc=0,
                                      time_min=time_min, time_max=time_max,
                                      figpath=fig_path)
-
 
 # Saving figure
 fig_name1 = 'Paper_RMSE_' + time_min + '_' + time_max + '.png'
@@ -350,7 +339,7 @@ for aq in aqs:
 
 # Plot settings
 # Initializing figure
-fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=300)
+fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=400)
 
 # Setting the same color bar limits for all four wells
 data_temp = [e for e in res_tmax if isinstance(e, float)]

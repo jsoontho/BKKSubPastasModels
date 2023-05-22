@@ -34,32 +34,11 @@ import bkk_sub_gw
 
 # %%###########################################################################
 # Runs the functions to calculate subsidence at point locations in BKK
+# Main paper graph
 ##############################################################################
 
-# For each well nest
-wellnestlist = ["LCBKK003",
-                "LCBKK005",
-                "LCBKK006",
-                "LCBKK007",
-                "LCBKK009",
-                "LCBKK011",
-                "LCBKK012",
-                "LCBKK013",
-                "LCBKK014",
-                "LCBKK015",
-                "LCBKK016",
-                "LCBKK018",
-                "LCBKK020",
-                "LCBKK021",
-                "LCBKK026",
-                "LCBKK027",
-                "LCBKK036",
-                "LCBKK038",
-                "LCBKK041",
-                "LCNBI003",
-                "LCNBI007",
-                "LCSPK007",
-                "LCSPK009"]
+# For well nest BKK013 (in paper) = LCBKK013
+wellnestlist = ["LCBKK013"]
 tmin = "1978"
 tmax = "2020"
 
@@ -128,6 +107,74 @@ sub_total, subv_total, ann_sub, \
                                              subv_total,
                                              all_results)
 
+# Plotting
+# path to save figures
+path = os.path.abspath("figures")
+
+###############################################################################
+# Plots Results: Bar graph for main paper for BKK013
+##############################################################################
+
+bkk_sub_gw.bkk_plotting.sub_bar(path, wellnestlist, all_results,
+                                sub_total, subv_total, ann_sub,
+                                tmin=tmin, tmax=tmax, save=1,
+                                benchflag=1)
+
+# %%###########################################################################
+# Runs the functions to calculate subsidence at point locations in BKK
+# Appendix graphs
+##############################################################################
+
+# For each well nest
+wellnestlist = ["LCBKK003",
+                "LCBKK005",
+                "LCBKK006",
+                "LCBKK007",
+                "LCBKK009",
+                "LCBKK011",
+                "LCBKK012",
+                "LCBKK013",
+                "LCBKK014",
+                "LCBKK015",
+                "LCBKK016",
+                "LCBKK018",
+                "LCBKK020",
+                "LCBKK021",
+                "LCBKK026",
+                "LCBKK027",
+                "LCBKK036",
+                "LCBKK038",
+                "LCBKK041",
+                "LCNBI003",
+                "LCNBI007",
+                "LCSPK007",
+                "LCSPK009"]
+
+# Calculates subsidence
+all_results, sub_total, subv_total = bkk_sub_gw.\
+    bkk_sub.bkk_subsidence(wellnestlist,
+                           mode, tmin,
+                           tmax,
+                           Thick_data,
+                           K_data,
+                           Sskv_data,
+                           Sske_data,
+                           CC=CC,
+                           Nz=node_num,
+                           ic_run=True,
+                           proxyflag=proxyflag,
+                           pumpflag=pumpflag,
+                           pump_path=ppath,
+                           pump_sheet=psheet,
+                           model_path=mpath)
+
+# Post process data
+sub_total, subv_total, ann_sub, \
+    avgsub = bkk_sub_gw.bkk_sub.bkk_postproc(wellnestlist,
+                                             sub_total,
+                                             subv_total,
+                                             all_results)
+
 # Average perc of each clay layer to total for all well nest
 BKClayavg = np.average([i[2] for i in avgsub[0::4]])*100
 PDClayavg = np.average([i[2] for i in avgsub[1::4]])*100
@@ -139,7 +186,7 @@ NBClayavg = np.average([i[2] for i in avgsub[3::4]])*100
 path = os.path.abspath("figures")
 
 # %%###########################################################################
-# Plots Results: Bar graph
+# Plots Results: Bar graph for appendix
 ##############################################################################
 
 bkk_sub_gw.bkk_plotting.sub_bar(path, wellnestlist, all_results,
@@ -148,7 +195,7 @@ bkk_sub_gw.bkk_plotting.sub_bar(path, wellnestlist, all_results,
                                 benchflag=1)
 
 # %%###########################################################################
-# Plots Results: Subsidence RMSE map
+# Plots Results: Subsidence RMSE map for main paper
 ##############################################################################
 
 # Spatial map plotting
@@ -157,17 +204,118 @@ bkk_sub_gw.bkk_plotting.sub_rmse_map(path, wellnestlist, all_results,
                                      ann_sub, tmin=tmin, tmax=tmax, save=1)
 
 # %%###########################################################################
-# Plots Results: Sensitivity Analysis
+# Plots Results: Forecasts of cumulative subsidence (cm) for pumping scenarios
 ##############################################################################
 
-# Mode can be "raw" as in raw groundwater data vs "Pastas" for importing Pastas
-# simulated groundwater in the aquifers
-mode = "Pastas"
+# For each well nest
+wellnestlist = ["LCBKK003",
+                "LCBKK005",
+                "LCBKK006",
+                "LCBKK007",
+                "LCBKK009",
+                "LCBKK011",
+                "LCBKK012",
+                "LCBKK013",
+                "LCBKK014",
+                "LCBKK015",
+                "LCBKK016",
+                "LCBKK018",
+                "LCBKK020",
+                "LCBKK021",
+                "LCBKK026",
+                "LCBKK027",
+                "LCBKK036",
+                "LCBKK038",
+                "LCBKK041",
+                "LCNBI003",
+                "LCNBI007",
+                "LCSPK007",
+                "LCSPK009"]
+tmin = "1978"
+tmax = "2060"
 
-# If mode is Pastas, need model path
-if mode == "Pastas":
+# Pumping flag, for PASTAS, if changing pumping scenario
+pumpflag = 1
+# If changing pumping scenario, need pumping sheet/path
+if pumpflag == 1:
 
-    mpath = os.path.abspath("models")
+    ppath = os.path.join(os.path.abspath("inputs"), "BasinPumping.xlsx")
+
+    # Pumping sheets
+    pumpsheets = ["EstTotalPump_54-60_Int50",
+                  "EstTotalPump_54-60_IntF25",
+                  "EstTotalPump_54-60_IntF100",
+                  "EstTotalPump_54-60_IntF50_25",
+                  "EstTotalPump_54-60_IntF0"]
+
+# Convergence criteria
+CC = 1 * 10**-5
+
+# Number of nodes in clay
+node_num = 10
+
+# Using available heads as proxy for missing
+proxyflag = 1
+
+# All ann subs
+all_ann_subs = []
+
+# For each pumping scenario
+for pumpsheet in pumpsheets:
+
+    # Calculates subsidence
+    all_results, sub_total, subv_total = bkk_sub_gw.\
+        bkk_sub.bkk_subsidence(wellnestlist,
+                               mode, tmin,
+                               tmax,
+                               Thick_data,
+                               K_data,
+                               Sskv_data,
+                               Sske_data,
+                               CC=CC,
+                               Nz=node_num,
+                               ic_run=True,
+                               proxyflag=proxyflag,
+                               pumpflag=pumpflag,
+                               pump_path=ppath,
+                               pump_sheet=pumpsheet,
+                               model_path=mpath)
+
+    # Post process data
+    sub_total, subv_total, ann_sub, \
+        _ = bkk_sub_gw.bkk_sub.bkk_postproc(wellnestlist,
+                                            sub_total,
+                                            subv_total,
+                                            all_results)
+
+    all_ann_subs.append(ann_sub)
+
+# Plotting
+# path to save figures
+path = os.path.abspath("figures")
+
+# %%###########################################################################
+# Plots Results: Line graphs of cumulative sub forecast for whole time period
+# For appendix
+##############################################################################
+
+bkk_sub_gw.bkk_plotting.sub_forecast(path, wellnestlist, all_ann_subs,
+                                     save=1)
+
+# %%###########################################################################
+# Plots Results: Maps of cumulative sub forecast from new tmin and tmax
+# For main paper
+##############################################################################
+
+tmin = "2020"
+tmax = "2060"
+bkk_sub_gw.bkk_plotting.sub_forecast_map(path, wellnestlist,
+                                         all_ann_subs, tmin, tmax,
+                                         save=1)
+
+# %%###########################################################################
+# Plots Results: Sensitivity Analysis, shown in appendix
+##############################################################################
 
 # Pumping flag, for PASTAS, if changing pumping scenario
 pumpflag = 1
@@ -306,128 +454,3 @@ for sens_mode in sens_modes:
                                           sens_sub, sens_subv, sens_ann,
                                           tmin=tmin, tmax=tmax, mode=sens_mode,
                                           num=num, save=1)
-
-# %%###########################################################################
-# Plots Results: Forecasts of cumulative subsidence (cm) for pumping scenarios
-##############################################################################
-
-# For each well nest
-wellnestlist = ["LCBKK003",
-                "LCBKK005",
-                "LCBKK006",
-                "LCBKK007",
-                "LCBKK009",
-                "LCBKK011",
-                "LCBKK012",
-                "LCBKK013",
-                "LCBKK014",
-                "LCBKK015",
-                "LCBKK016",
-                "LCBKK018",
-                "LCBKK020",
-                "LCBKK021",
-                "LCBKK026",
-                "LCBKK027",
-                "LCBKK036",
-                "LCBKK038",
-                "LCBKK041",
-                "LCNBI003",
-                "LCNBI007",
-                "LCSPK007",
-                "LCSPK009"]
-tmin = "1978"
-tmax = "2060"
-
-# Reading in thickness and storage data
-path = os.path.join(os.path.abspath("inputs"), "SUBParameters.xlsx")
-Thick_data = pd.read_excel(path, sheet_name="Thickness",
-                           index_col=0)  # Thickness
-Sskv_data = pd.read_excel(path,
-                          sheet_name="Sskv",
-                          index_col=0)  # Sskv
-Sske_data = pd.read_excel(path,
-                          sheet_name="Sske",
-                          index_col=0)  # Ssk
-K_data = pd.read_excel(path,
-                       sheet_name="K",
-                       index_col=0)  # K
-
-# Mode can be "raw" as in raw groundwater data vs "Pastas" for importing Pastas
-# simulated groundwater in the aquifers
-mode = "Pastas"
-
-# If mode is Pastas, need model path
-if mode == "Pastas":
-
-    mpath = os.path.abspath("models")
-
-# Pumping flag, for PASTAS, if changing pumping scenario
-pumpflag = 1
-# If changing pumping scenario, need pumping sheet/path
-if pumpflag == 1:
-
-    ppath = os.path.join(os.path.abspath("inputs"), "BasinPumping.xlsx")
-
-    # Pumping sheets
-    pumpsheets = ["EstTotalPump_54-60_Int50",
-                  "EstTotalPump_54-60_IntF25",
-                  "EstTotalPump_54-60_IntF100",
-                  "EstTotalPump_54-60_IntF50_25",
-                  "EstTotalPump_54-60_IntF0"]
-
-# Convergence criteria
-CC = 1 * 10**-5
-
-# Number of nodes in clay
-node_num = 10
-
-# Using available heads as proxy for missing
-proxyflag = 1
-
-# All ann subs
-all_ann_subs = []
-
-# For each pumping scenario
-for pumpsheet in pumpsheets:
-
-    # Calculates subsidence
-    all_results, sub_total, subv_total = bkk_sub_gw.\
-        bkk_sub.bkk_subsidence(wellnestlist,
-                               mode, tmin,
-                               tmax,
-                               Thick_data,
-                               K_data,
-                               Sskv_data,
-                               Sske_data,
-                               CC=CC,
-                               Nz=node_num,
-                               ic_run=True,
-                               proxyflag=proxyflag,
-                               pumpflag=pumpflag,
-                               pump_path=ppath,
-                               pump_sheet=pumpsheet,
-                               model_path=mpath)
-
-    # Post process data
-    sub_total, subv_total, ann_sub, \
-        _ = bkk_sub_gw.bkk_sub.bkk_postproc(wellnestlist,
-                                            sub_total,
-                                            subv_total,
-                                            all_results)
-
-    all_ann_subs.append(ann_sub)
-
-# Plotting
-# path to save figures
-path = os.path.abspath("figures")
-
-# Line graphs of cumulative sub forecast for whole time period
-bkk_sub_gw.bkk_plotting.sub_forecast(path, wellnestlist, all_ann_subs,
-                                     save=1)
-
-# Maps of cumulative sub forecast from new tmin and tmax
-tmin = "2020"
-tmax = "2060"
-bkk_sub_gw.bkk_plotting.sub_forecast_map(path, wellnestlist,
-                                         all_ann_subs, tmin, tmax,
-                                         save=1)

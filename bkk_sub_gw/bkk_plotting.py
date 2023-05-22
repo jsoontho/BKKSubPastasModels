@@ -194,8 +194,10 @@ def sub_bar(path, wellnestlist, all_results,
 
             # Plotting settings
             plt.legend(loc="center right")
-            plt.title(wellnest)
-            plt.ylim((-2, 10))
+            # set y limits/title only if running batch well nests
+            if len(wellnestlist) > 1:
+                plt.ylim((-2, 10))
+                plt.title(wellnest)
             plt.ylabel("Annual Subsidence Rate (cm/yr)")
             plt.xlabel("Years")
             plt.annotate("RMSE: " + "{:.1f}".format(rms) + " cm/year",
@@ -225,13 +227,26 @@ def sub_bar(path, wellnestlist, all_results,
         # If saving figure
         if np.logical_and(save == 1, benchflag == 1):
 
-            fig_name = wellnest + "_BenchvsImplicit_AnnSubTotal.eps"
-            full_figpath = os.path.join(path, fig_name)
-            plt.savefig(full_figpath, format="eps")
+            # set name of file certain way if running batch well nests
+            if len(wellnestlist) > 1:
 
-            fig_name = wellnest + "_BenchvsImplicit_AnnSubTotal.png"
-            full_figpath = os.path.join(path, fig_name)
-            plt.savefig(full_figpath, format="png")
+                fig_name = wellnest + "_BenchvsImplicit_AnnSubTotal.eps"
+                full_figpath = os.path.join(path, fig_name)
+                plt.savefig(full_figpath, format="eps")
+
+                fig_name = wellnest + "_BenchvsImplicit_AnnSubTotal.png"
+                full_figpath = os.path.join(path, fig_name)
+                plt.savefig(full_figpath, format="png")
+
+            else:
+
+                fig_name = wellnest + "_BenchvsImplicit_AnnSubTotal_PAPER.eps"
+                full_figpath = os.path.join(path, fig_name)
+                plt.savefig(full_figpath, format="eps")
+
+                fig_name = wellnest + "_BenchvsImplicit_AnnSubTotal_PAPER.png"
+                full_figpath = os.path.join(path, fig_name)
+                plt.savefig(full_figpath, format="png")
 
 
 def gwlocs_map(path, save=0):
@@ -365,7 +380,6 @@ def sub_rmse_map(path, wellnestlist, all_results,
     xs = []
     ys = []
     cs_rmse = []
-    cs_perc = []
 
     # For each wellnest in list
     # num_well is the index, wellnest = name
@@ -441,13 +455,6 @@ def sub_rmse_map(path, wellnestlist, all_results,
                                  squared=False)
         cs_rmse.append(rms)
 
-        # Taking out measurement outliers
-        # q75, q25 = np.percentile(-landlevel[landlevel != 0], [75, 25])
-        # cs_perc.append(rms/(q75 - q25))
-        # print(wellnest, rms/(q75 - q25))
-
-        cs_perc.append(rms/np.median(-landlevel[landlevel != 0]))
-        print(wellnest, rms/np.median(-landlevel[landlevel != 0]))
         x_ = gwwell_locs.Long[gwwell_locs.WellNest_Name == wellnest].item()
         y_ = gwwell_locs.Lat[gwwell_locs.WellNest_Name == wellnest].item()
         xs.append(x_)
@@ -473,27 +480,6 @@ def sub_rmse_map(path, wellnestlist, all_results,
         plt.savefig(full_figpath, dpi=400, bbox_inches="tight", format="eps")
 
         fig_name1 = "Map_Sub_RMSE_" + tmin + "_" + tmax + "_50_2020.png"
-        full_figpath = os.path.join(path, fig_name1)
-        plt.savefig(full_figpath, dpi=400, bbox_inches="tight", format="png")
-
-    # Printing average subsidence rmse relative to subsidence rate range (%)
-    # Initializing figure
-    fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=400)
-    datalim = None
-    map = Basemap(llcrnrlon=100.3, llcrnrlat=13.4, urcrnrlon=100.8, urcrnrlat=14,
-                  resolution="h", ellps="WGS84", lat_0=13.6, lon_0=100.4)
-    draw_basemap(map, xs, ys, np.multiply(cs_perc, 100), fig=fig, ax=ax,
-                 datalim=datalim, mode="Sub_RMSE%", save=0,
-                 time_min=tmin, time_max=tmax, figpath=path)
-
-    # If saving figure
-    if save == 1:
-
-        fig_name1 = "Map_Sub_RMSEperc_" + tmin + "_" + tmax + "_50_2020.eps"
-        full_figpath = os.path.join(path, fig_name1)
-        plt.savefig(full_figpath, dpi=400, bbox_inches="tight", format="eps")
-
-        fig_name1 = "Map_Sub_RMSEperc_" + tmin + "_" + tmax + "_50_2020.png"
         full_figpath = os.path.join(path, fig_name1)
         plt.savefig(full_figpath, dpi=400, bbox_inches="tight", format="png")
 
@@ -908,8 +894,6 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
     fig_path - figure to save path
     """
     # Plotting map
-    fig.set_size_inches(3.2, 2.2)
-
     # Land as green and ocean as blue
     # Drawing coastline
     map.drawcoastlines(zorder=2, linewidth=1)
@@ -974,12 +958,14 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         p.set_array(cs_all)  # Colorbar
         ax.add_collection(p)
 
-        # Colorbar
+        # New ax with dimensions of the colorbar
+        cbar_ax = fig.add_axes([0.292, 0.05, 0.44, 0.03])
 
-        cb = fig.colorbar(p, ax=ax, location="bottom", shrink=0.5, pad=0.05,
-                          ticks=mticker.MultipleLocator(10))
-        cb.ax.tick_params(labelsize=6)
-        cb.set_label("Normalized RMSE", fontsize=7)
+        # Colorbar
+        cb = fig.colorbar(p, ax=ax, cax=cbar_ax, location="bottom",
+                          pad=0.05, ticks=mticker.MultipleLocator(.5))
+        cb.ax.tick_params(labelsize=5)
+        cb.set_label("RMSE (m)", fontsize=5)
         plt.set_cmap("coolwarm")
         cb.mappable.set_clim(vmin=datalim[0],
                              vmax=datalim[1])
@@ -1013,22 +999,21 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
                                                linewidth=.5)
 
                 handlebox.add_artist(lgd_elements)
-                plt.legend()
                 return lgd_elements
 
-        plt.legend([WedgeObject()], ["BK PD\nNB NL"],
-                   handler_map={WedgeObject: WedgeObjectHandler()},
-                   fontsize=5, loc="upper left")
+        ax.legend([WedgeObject()], ["BK PD\nNB NL"],
+                  handler_map={WedgeObject: WedgeObjectHandler()},
+                  fontsize=5, loc="upper left")
 
         # Title
         avgRMSE = pd.concat([cs["NB"].cs, cs["NL"].cs, cs["PD"].cs,
                              cs["BK"].cs], ignore_index=True)
-        print(str("%.2f" % np.average(cs["NB"].cs)) + "% NormRMSE for NB")
-        print(str("%.2f" % np.average(cs["NL"].cs)) + "% NormRMSE for NL")
-        print(str("%.2f" % np.average(cs["PD"].cs)) + "% NormRMSE for PD")
-        print(str("%.2f" % np.average(cs["BK"].cs)) + "% NormRMSE for BK")
-        print("Average NormRMSE for all four aquifers: " +
-              str("%.2f" % np.average(avgRMSE)) + "%")
+        print(str("%.2f" % np.average(cs["NB"].cs)) + "m RMSE for NB")
+        print(str("%.2f" % np.average(cs["NL"].cs)) + "m RMSE for NL")
+        print(str("%.2f" % np.average(cs["PD"].cs)) + "m RMSE for PD")
+        print(str("%.2f" % np.average(cs["BK"].cs)) + "m RMSE for BK")
+        print("Average RMSE for all four aquifers: " +
+              str("%.2f" % np.average(avgRMSE)) + "m")
 
     # t90 mode for all wells and all well nests
     # wells as wedges
@@ -1071,10 +1056,15 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         ax.add_collection(p)
 
         # Colorbar
-        cb = fig.colorbar(p, ax=ax, location="bottom", shrink=0.5, pad=0.05,
+        # New ax with dimensions of the colorbar
+        cbar_ax = fig.add_axes([0.292, 0.05, 0.44, 0.03])
+
+        # Colorbar
+        cb = fig.colorbar(p, ax=ax, cax=cbar_ax, location="bottom",
+                          pad=0.05,
                           ticks=mticker.MultipleLocator(5))
-        cb.ax.tick_params(labelsize=6)
-        cb.set_label("Years", fontsize=7)
+        cb.ax.tick_params(labelsize=5)
+        cb.set_label("Years", fontsize=5)
         cb.mappable.set_clim(vmin=datalim[0],
                              vmax=datalim[1])
         plt.set_cmap("plasma")
@@ -1107,45 +1097,36 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
                                                linewidth=.5)
 
                 handlebox.add_artist(lgd_elements)
-
                 return lgd_elements
 
-        plt.legend([Wedge_obj()], ["BK PD\nNB NL"],
-                   handler_map={Wedge_obj: WedgeHandler()},
-                   fontsize=5, loc="upper left")
+        ax.legend([Wedge_obj()], ["BK PD\nNB NL"],
+                  handler_map={Wedge_obj: WedgeHandler()},
+                  fontsize=5, loc="upper left")
 
     elif mode == "Sub_RMSE":
 
+        x = np.array(x)
+        y = np.array(y)
+        map.scatter(x[[1, 2, 6]], y[[1, 2, 6]], zorder=4, marker="o",
+                    color="k", label="Bad Fits", s=15)
+        map.scatter(x[[3, 5, 11, 12, 15, 20]], y[[3, 5, 11, 12, 15, 20]],
+                    zorder=4, marker="o",
+                    color="m", label="Noisy Observations", s=15)
         map.scatter(x, y, s=30,
                     c=np.multiply(cs, 1), zorder=3,
                     marker="o", edgecolor="k",
                     cmap="RdYlBu_r", linewidth=.75)
+
         plt.clim(datalim)
-        cb = plt.colorbar(location="bottom", shrink=0.5, pad=0.05,
-                          ticks=mticker.MultipleLocator(1))
-        cb.ax.tick_params(labelsize=6)
-        cb.set_label("RMSE (cm/year)", fontsize=7)
-        # plt.title("RMSE between \nSimulated and Observed Subsidence",
-        #           {"fontname": "Arial"}, fontsize=8)
+        plt.legend(loc="lower left", prop={'size': 4})
+        # New ax with dimensions of the colorbar
+        cbar_ax = fig.add_axes([0.292, 0.05, 0.44, 0.03])
+        cb = plt.colorbar(location="bottom", cax=cbar_ax, pad=0.05,
+                          ticks=mticker.MultipleLocator(.5))
+        cb.ax.tick_params(labelsize=5)
+        cb.set_label("RMSE (cm/year)", fontsize=5)
+
         cb.solids.set_rasterized(False)
-        plt.show()
-
-    # RMSE of subsidence simulation as a % of the total observation
-    elif mode == "Sub_RMSE%":
-
-        map.scatter(x, y, s=30,
-                    c=np.multiply(cs, 1), zorder=3,
-                    marker="o", edgecolor="k",
-                    cmap="RdYlBu_r", linewidth=.75)
-        plt.clim(datalim)
-        cb = plt.colorbar(location="bottom", shrink=0.5, pad=0.05,
-                          ticks=mticker.MultipleLocator(100))
-        cb.ax.tick_params(labelsize=6)
-        cb.set_label("Normalized RMSE", fontsize=7)
-        cb.solids.set_rasterized(False)
-        print("Average NormRMSE for all well nests: " +
-              str("%1.f" % np.average(cs[cs<100])) + "%")
-
         plt.show()
 
     # Plotting GW well locations
@@ -1223,12 +1204,15 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         ax.add_collection(p)
 
         # Colorbar
-        plt.set_cmap("viridis")
-        cb = fig.colorbar(p, ax=ax, location="bottom", shrink=0.5, pad=0.05,
+        # New ax with dimensions of the colorbar
+        cbar_ax = fig.add_axes([0.292, 0.05, 0.44, 0.03])
+        plt.set_cmap("BrBG")
+        cb = fig.colorbar(p, ax=ax, cax=cbar_ax, location="bottom",
+                          pad=0.05,
                           ticks=mticker.MultipleLocator(5))
-        cb.ax.tick_params(labelsize=6)
-        cb.set_label("Cumulative Subsidence (cm)", fontsize=7)
-        plt.set_cmap("viridis")
+        cb.ax.tick_params(labelsize=5)
+        cb.set_label("Cumulative Subsidence (cm)", fontsize=5)
+        plt.set_cmap("BrBG")
         cb.mappable.set_clim(vmin=datalim[0],
                              vmax=datalim[1])
         cb.solids.set_rasterized(False)
@@ -1264,14 +1248,13 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
                                                linewidth=.5)
 
                 handlebox.add_artist(lgd_elements)
-                plt.legend()
                 return lgd_elements
 
-        plt.legend([WedgeObject()],
-                   ["        500,000    250,000\nNo Pumping          1,000,000\n" +
-                    "         Delayed 250,000"],
-                   handler_map={WedgeObject: WedgeObjectHandler()},
-                   fontsize=4, loc="lower left")
+        ax.legend([WedgeObject()],
+                  ["        500,000    250,000\nNo Pumping          1,000,000\n" +
+                   "         Delayed 250,000"],
+                  handler_map={WedgeObject: WedgeObjectHandler()},
+                  fontsize=4, loc="lower left")
 
         plt.show()
 
@@ -1493,9 +1476,12 @@ def Pastas_results(models, Wellnest_name, well_names,
         rmax = 0  # tmax of the response
         axb = None
 
-        # plot the step response
+        # plot the step response (90% of response)
         response = model._get_response(block_or_step="step",
-                                       name="well", add_0=True) * 50
+                                       name="well", dt=0.5,
+                                       add_0=True) * 50
+        tmax = model.get_response_tmax("well", cutoff=0.90)
+        response = response[:round(tmax*0.9)]
 
         rmax = max(rmax, response.index.max())
 

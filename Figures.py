@@ -1,8 +1,13 @@
 # ##############################################################################
 """Calculate subsidence in BKK at wellnests with 8 aquifers but simulates top four.
 
-# Plotting two main figures for Groundwater Paper
-# Article Title: Hybrid data-driven and physics-based modeling of ground-
+Plotting three main figures for Groundwater Paper
+a) Data availability (Fig 1)
+b) Groundwater well nest locations (Fig 6)
+c) Basin wide pumping, groundwater well forecasts, subsidence forecasts for well
+nest BKK013 (Fig 12)
+
+Article Title: Hybrid data-driven and physics-based modeling of ground-
 water and subsidence with an application to Bangkok, Thailand
 
 Jenny Soonthornrangsan 2023
@@ -32,6 +37,136 @@ import main_functions as mfs
 
 # Changing current directory to locaiton of python script
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+# %% Data availability
+###############################################################################
+# Plotting settings
+###############################################################################
+
+plt.rc("font", size=12)  # controls default text size
+plt.rc("axes", titlesize=5)  # fontsize of the title
+plt.rc("axes", labelsize=6)  # fontsize of the x and y labels
+plt.rc("xtick", labelsize=6)  # fontsize of the x tick labels
+plt.rc("ytick", labelsize=6)  # fontsize of the y tick labels
+plt.rc("legend", fontsize=6)  # fontsize of the legend
+# Pumping vs groundwater vs levelling measurements
+
+# Plotting pumping
+# Reading in data
+sheet = "EstTotalPump_54-60_Int50"
+pumppath = "inputs\\BasinPumping.xlsx"
+pump_2020 = pd.read_excel(pumppath, sheet_name=sheet)
+
+# Xticks
+x = pd.date_range(start=pump_2020.Date[0],
+                  end=pump_2020.Date[19733],
+                  periods=8)
+
+# Plotting
+fig, axs = plt.subplots(3, sharex=True, figsize=(6.75, 3.38), dpi=300)
+axs[0].plot(pump_2020.Date[:19733], pump_2020.Pump2[:19733], linewidth=1.5)
+axs[0].set_ylabel("Pumping Rate\n(m$^3$/day)")
+axs[0].set_title("Basin-Wide Pumping Estimates for Bangkok",
+                 fontsize=7)
+axs[0].grid(True, linestyle="dotted")
+
+# Plottign groundwater
+# Reading in groundwater data
+Wellnest_name = "LCBKK013"
+well_name = "PD32"
+well_path = "inputs\\"
+full_path = os.path.join(well_path, Wellnest_name + ".xlsx")
+data = pd.read_excel(full_path, skiprows=3)
+all_head_data, gw_well_head = mfs.GW_Data_Process(data, well_name)
+
+# CORRECTING GW HEAD DATA TO LAND SURFACE (COASTAL DEM 2.1)
+landsurf_path = os.path.join(well_path,
+                             "LandSurfElev_GWWellLocs.xlsx")
+
+# Each well nest has its own Ss and K sheet
+landsurf_data = pd.read_excel(landsurf_path,
+                              sheet_name="2.1",
+                              usecols="C:F",
+                              index_col=0)
+
+gw_well_head.Head += (landsurf_data.RASTERVALU.loc[Wellnest_name])
+# Adding years and annual average heads
+gw_well_head["year"] = gw_well_head.index.year
+axs[1].plot(gw_well_head.index, gw_well_head.Head, color="k",
+            linewidth=1.5)
+axs[1].set_xlim(([datetime.date(1954, 1, 1), datetime.date(2020, 12, 31)]))
+axs[1].set_ylabel("Head (m)")
+axs[1].set_title("Measured Groundwater Levels for Well PD32 in Well Nest BKK013",
+                 fontsize=7)
+axs[1].grid(True, linestyle="dotted")
+loc = os.path.join(os.path.abspath("inputs"), "SurveyingLevels.xlsx")
+
+subdata = pd.read_excel(loc, sheet_name=Wellnest_name+"_Leveling",
+                        index_col=3)
+subdata = pd.DataFrame(subdata)
+subdata.index = pd.to_datetime(subdata.index)
+
+# Getting rid of benchmarks outside time period
+subdata = subdata[(subdata.Year <= 2020)]
+
+# Benchmarks should start at 0 at the first year.
+bench = subdata.loc[:, subdata.columns.str.contains("Land")]
+bench = bench.fillna(0)
+
+if (bench.iloc[0] != 0).any():
+    bench.iloc[0] = 0
+
+# IMPORTANT INFO
+# For benchmark measurements, the first year is 0, the second year is
+# the compaction rate over that first year.
+# For implicit Calc, the first year has a compaction rate over that
+# year, so to shift benchmarks value to the previouse year to match
+# Index has the right years
+bench.index = bench.index.shift(-1, freq="D")
+bench["date"] = bench.index
+
+# Gets the last date of each year
+lastdate = bench.groupby(pd.DatetimeIndex(bench["date"]).year,
+                         as_index=False).agg({"date": max}).reset_index(drop=True)
+bench = bench.loc[lastdate.date]
+
+leveling = bench[
+    bench.columns[
+        bench.columns.str.contains("Land")].item()]
+
+leveling[leveling == 0] = np.nan
+axs[2].bar(leveling.index, -leveling.values, color="orange", width=300)
+axs[2].xaxis_date()
+axs[2].set_xlim(([datetime.date(1954, 1, 1), datetime.date(2020, 12, 31)]))
+axs[2].set_ylabel("Annual Rate\n(cm/year)")
+axs[2].set_title(
+    "Measured Annual Land Subsidence Rates from Benchmark Leveling Station 5503",
+    fontsize=7)
+plt.tight_layout()
+plt.rc("font", size=10)  # controls default text size
+axs[2].grid(True, linestyle="dotted")
+
+# a), b), c) labels for paper
+for index, ax in enumerate(axs):
+
+    ax.text(-.1, 1.1, string.ascii_lowercase[index] + ")",
+            transform=ax.transAxes,
+            size=10, weight='bold')
+
+# Saving
+path = "figures"
+fig_name = "DataAvailability.eps"
+full_figpath = os.path.join(path, fig_name)
+plt.savefig(full_figpath, bbox_inches="tight", format="eps")
+
+fig_name = "DataAvailability.png"
+full_figpath = os.path.join(path, fig_name)
+plt.savefig(full_figpath, bbox_inches="tight", format="png")
+
+# %% Plotting groundwater well locations
+
+path = os.path.abspath("figures")
+bkk_sub_gw.bkk_plotting.gwlocs_map(path, save=1)
 
 # %% Pumping for four different sceniarios
 ###############################################################################
@@ -382,133 +517,3 @@ plt.savefig(full_figpath, dpi=300, bbox_inches="tight", format="png")
 fig_name = "ForecastFigs.eps"
 full_figpath = os.path.join(path, fig_name)
 plt.savefig(full_figpath, dpi=300, bbox_inches="tight", format="eps")
-
-# %% Data availability
-###############################################################################
-# Plotting settings
-###############################################################################
-
-plt.rc("font", size=12)  # controls default text size
-plt.rc("axes", titlesize=5)  # fontsize of the title
-plt.rc("axes", labelsize=6)  # fontsize of the x and y labels
-plt.rc("xtick", labelsize=6)  # fontsize of the x tick labels
-plt.rc("ytick", labelsize=6)  # fontsize of the y tick labels
-plt.rc("legend", fontsize=6)  # fontsize of the legend
-# Pumping vs groundwater vs levelling measurements
-
-# Plotting pumping
-# Reading in data
-sheet = "EstTotalPump_54-60_Int50"
-pumppath = "inputs\\BasinPumping.xlsx"
-pump_2020 = pd.read_excel(pumppath, sheet_name=sheet)
-
-# Xticks
-x = pd.date_range(start=pump_2020.Date[0],
-                  end=pump_2020.Date[19733],
-                  periods=8)
-
-# Plotting
-fig, axs = plt.subplots(3, sharex=True, figsize=(6.75, 3.38), dpi=300)
-axs[0].plot(pump_2020.Date[:19733], pump_2020.Pump2[:19733], linewidth=1.5)
-axs[0].set_ylabel("Pumping Rate\n(m$^3$/day)")
-axs[0].set_title("Basin-Wide Pumping Estimates for Bangkok",
-                 fontsize=7)
-axs[0].grid(True, linestyle="dotted")
-
-# Plottign groundwater
-# Reading in groundwater data
-Wellnest_name = "LCBKK013"
-well_name = "PD32"
-well_path = "inputs\\"
-full_path = os.path.join(well_path, Wellnest_name + ".xlsx")
-data = pd.read_excel(full_path, skiprows=3)
-all_head_data, gw_well_head = mfs.GW_Data_Process(data, well_name)
-
-# CORRECTING GW HEAD DATA TO LAND SURFACE (COASTAL DEM 2.1)
-landsurf_path = os.path.join(well_path,
-                             "LandSurfElev_GWWellLocs.xlsx")
-
-# Each well nest has its own Ss and K sheet
-landsurf_data = pd.read_excel(landsurf_path,
-                              sheet_name="2.1",
-                              usecols="C:F",
-                              index_col=0)
-
-gw_well_head.Head += (landsurf_data.RASTERVALU.loc[Wellnest_name])
-# Adding years and annual average heads
-gw_well_head["year"] = gw_well_head.index.year
-axs[1].plot(gw_well_head.index, gw_well_head.Head, color="k",
-            linewidth=1.5)
-axs[1].set_xlim(([datetime.date(1954, 1, 1), datetime.date(2020, 12, 31)]))
-axs[1].set_ylabel("Head (m)")
-axs[1].set_title("Measured Groundwater Levels for Well PD32 in Well Nest LCBKK013",
-                 fontsize=7)
-axs[1].grid(True, linestyle="dotted")
-loc = os.path.join(os.path.abspath("inputs"), "SurveyingLevels.xlsx")
-
-subdata = pd.read_excel(loc, sheet_name=Wellnest_name+"_Leveling",
-                        index_col=3)
-subdata = pd.DataFrame(subdata)
-subdata.index = pd.to_datetime(subdata.index)
-
-# Getting rid of benchmarks outside time period
-subdata = subdata[(subdata.Year <= 2020)]
-
-# Benchmarks should start at 0 at the first year.
-bench = subdata.loc[:, subdata.columns.str.contains("Land")]
-bench = bench.fillna(0)
-
-if (bench.iloc[0] != 0).any():
-    bench.iloc[0] = 0
-
-# IMPORTANT INFO
-# For benchmark measurements, the first year is 0, the second year is
-# the compaction rate over that first year.
-# For implicit Calc, the first year has a compaction rate over that
-# year, so to shift benchmarks value to the previouse year to match
-# Index has the right years
-bench.index = bench.index.shift(-1, freq="D")
-bench["date"] = bench.index
-
-# Gets the last date of each year
-lastdate = bench.groupby(pd.DatetimeIndex(bench["date"]).year,
-                         as_index=False).agg({"date": max}).reset_index(drop=True)
-bench = bench.loc[lastdate.date]
-
-leveling = bench[
-    bench.columns[
-        bench.columns.str.contains("Land")].item()]
-
-leveling[leveling == 0] = np.nan
-axs[2].bar(leveling.index, -leveling.values, color="orange", width=300)
-axs[2].xaxis_date()
-axs[2].set_xlim(([datetime.date(1954, 1, 1), datetime.date(2020, 12, 31)]))
-axs[2].set_ylabel("Annual Rate\n(cm/year)")
-axs[2].set_title(
-    "Measured Annual Land Subsidence Rates from Benchmark Leveling Station 5503",
-    fontsize=7)
-plt.tight_layout()
-plt.rc("font", size=10)  # controls default text size
-axs[2].grid(True, linestyle="dotted")
-
-# a), b), c) labels for paper
-for index, ax in enumerate(axs):
-
-    ax.text(-.1, 1.1, string.ascii_lowercase[index] + ")",
-            transform=ax.transAxes,
-            size=10, weight='bold')
-
-# Saving
-path = "figures"
-fig_name = "DataAvailability.eps"
-full_figpath = os.path.join(path, fig_name)
-plt.savefig(full_figpath, bbox_inches="tight", format="eps")
-
-fig_name = "DataAvailability.png"
-full_figpath = os.path.join(path, fig_name)
-plt.savefig(full_figpath, bbox_inches="tight", format="png")
-
-# %% Plotting groundwater well locations
-
-path = os.path.abspath("figures")
-bkk_sub_gw.bkk_plotting.gwlocs_map(path, save=1)
