@@ -34,7 +34,7 @@ import bkk_sub_gw
 import main_functions as mfs
 
 # Ignoring Pastas warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 # Changing current directory to locaiton of python script
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -43,12 +43,12 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 # Plotting settings
 ###############################################################################
 
-plt.rc('font', size=10)  # controls default text size
-plt.rc('axes', titlesize=10)  # fontsize of the title
-plt.rc('axes', labelsize=7)  # fontsize of the x and y labels
-plt.rc('xtick', labelsize=7)  # fontsize of the x tick labels
-plt.rc('ytick', labelsize=7)  # fontsize of the y tick labels
-plt.rc('legend', fontsize=6)  # fontsize of the legend
+plt.rc("font", size=10)  # controls default text size
+plt.rc("axes", titlesize=10)  # fontsize of the title
+plt.rc("axes", labelsize=7)  # fontsize of the x and y labels
+plt.rc("xtick", labelsize=7)  # fontsize of the x tick labels
+plt.rc("ytick", labelsize=7)  # fontsize of the y tick labels
+plt.rc("legend", fontsize=6)  # fontsize of the legend
 
 # %%###########################################################################
 # Pastas settings
@@ -72,8 +72,8 @@ add_graph = 0
 # Folder to save/import graph and model
 modelpath = os.path.abspath("models")
 figpath = os.path.abspath("figures")
-pumppath = os.path.join(os.path.abspath("inputs"), 'BasinPumping.xlsx')
-pumpsheet = 'EstTotalPump_54-60_Int50'
+pumppath = os.path.join(os.path.abspath("inputs"), "BasinPumping.xlsx")
+pumpsheet = "EstTotalPump_54-60_Int50"
 
 # If running with pumping
 # If basin wide pumping set pump_basin_flag to 1
@@ -103,8 +103,8 @@ tot_path = os.path.abspath("inputs")
 if list_wellnest_flag == 1:
 
     files = os.listdir(tot_path)
-    files = [i.replace('.xlsx', '') for i in files
-             if i.startswith('LC') and "_" not in i]
+    files = [i.replace(".xlsx", "") for i in files
+             if i.startswith("LC") and "_" not in i]
 
 else:
     files = Wellnest_name
@@ -126,7 +126,7 @@ for Wellnest_name in files:
     well_names = []
 
     # Reading in groundwater data
-    full_path = os.path.join(tot_path, Wellnest_name + '.xlsx')
+    full_path = os.path.join(tot_path, Wellnest_name + ".xlsx")
     data = pd.read_excel(full_path, skiprows=3)
 
     # For all wells in well nest
@@ -147,15 +147,15 @@ for Wellnest_name in files:
             #         head data relative to 0 m for specific well
             all_head_data, gw_well_head = mfs.GW_Data_Process(data,
                                                               well_name)
-            print('\nGW obs imported for ' + Wellnest_name + ' and ' +
-                  well_name + '\n')
+            print("\nGW obs imported for " + Wellnest_name + " and " +
+                  well_name + "\n")
 
             # CORRECTING GW HEAD DATA TO LAND SURFACE (COASTAL DEM 2.1)
             # Reading in land surface elevation for each well nest
             landsurf_path = os.path.join(tot_path,
-                                         'LandSurfElev_GWWellLocs.xlsx')
+                                         "LandSurfElev_GWWellLocs.xlsx")
             landsurf_data = pd.read_excel(landsurf_path,
-                                          sheet_name='2.1',
+                                          sheet_name="2.1",
                                           usecols="C:F",
                                           index_col=0)
 
@@ -168,7 +168,7 @@ for Wellnest_name in files:
             # Saving years and annual average heads
             gw_well_head["year"] = gw_well_head.index.year  # Saving year
             gw_year = gw_well_head.groupby(gw_well_head["year"]).mean()
-            gw_year["Date"] = pd.to_datetime(gw_year.index, format='%Y')
+            gw_year["Date"] = pd.to_datetime(gw_year.index, format="%Y")
             gw_year.index = gw_year.Date  # Setting index as date
             gw_year["year"] = gw_year.index.year  # Saving year
 
@@ -177,8 +177,8 @@ for Wellnest_name in files:
             time_max = str(gw_year[gw_year.Head.notna()].year[-1])
 
             # Gets rid of data not within min and max time
-            gw_year = gw_year[(gw_year['year'] >= int(time_min)) &
-                              (gw_year['year'] <= int(time_max))]
+            gw_year = gw_year[(gw_year["year"] >= int(time_min)) &
+                              (gw_year["year"] <= int(time_max))]
 
             # If GW well does not have data within time period, skips this well
             if gw_year.Head.isnull().all():
@@ -194,9 +194,9 @@ for Wellnest_name in files:
             # Steady state heads already realtive to same global datum
             # as land surface elevation
             SS_path = os.path.join(tot_path,
-                                   'SS_Head_GWWellLocs.xlsx')
+                                   "SS_Head_GWWellLocs.xlsx")
             SS_data = pd.read_excel(SS_path,
-                                    sheet_name='SS_Py',
+                                    sheet_name="SS_Py",
                                     index_col=0)
 
             # Getting steady state heads according to aquifer
@@ -232,7 +232,7 @@ for Wellnest_name in files:
                 # Daily interpolated and estimated pumping rates for the basin
                 # from simulated (Chula report)
                 EstTotPump = pd.read_excel(pumppath, sheet_name=pumpsheet,
-                                           index_col=0, parse_dates=['Date'])
+                                           index_col=0, parse_dates=["Date"])
 
                 # Creating stress model
                 EstTotPump_ = ps.StressModel(EstTotPump.Pump, rfunc=pump_rfunc,
@@ -240,7 +240,7 @@ for Wellnest_name in files:
                                              up=False)
                 # Adding stress model
                 model.add_stressmodel(EstTotPump_)
-                print('\nPumping obs added basin-wide\n')
+                print("\nPumping obs added basin-wide\n")
 
             ###################################################################
             # Solving/Saving Pastas Model
@@ -287,14 +287,14 @@ for Wellnest_name in files:
 
             # If time series out of bounds
             except ValueError:
-                print('Time series out of bounds.\nCannot run model')
+                print("Time series out of bounds.\nCannot run model")
                 sys.exit()
 
             # If saving model
             if save_model == 1:
-                model.to_file(modelpath + "/" + Wellnest_name + '_' +
-                              well_name + '_GW_' + time_min + '_' + time_max +
-                              '_model.pas')
+                model.to_file(modelpath + "/" + Wellnest_name + "_" +
+                              well_name + "_GW_" + time_min + "_" + time_max +
+                              "_model.pas")
 
         #######################################################################
         # Importing Pastas Model
@@ -329,7 +329,7 @@ for Wellnest_name in files:
                 # If the same pumping stress time series, then
                 # optimal parameters are the same
                 EstTotPump = pd.read_excel(pumppath, sheet_name=pumpsheet,
-                                           index_col=0, parse_dates=['Date'])
+                                           index_col=0, parse_dates=["Date"])
                 EstTotPump_ = ps.StressModel(EstTotPump.Pump, rfunc=pump_rfunc,
                                              name="well", settings="well",
                                              up=False)
@@ -356,9 +356,9 @@ for Wellnest_name in files:
 
         # set plotting time min and time max
         if "BK" in well_name:
-            ptime_min = '1986'
+            ptime_min = "1986"
         else:
-            ptime_min = '1978'
+            ptime_min = "1978"
         ptime_max = "2020"
 
         # Saving time_mins and time_maxs
@@ -394,25 +394,25 @@ for Wellnest_name in files:
 
                 # First figure from plot
                 # Fig name
-                fig_name1 = Wellnest_name + '_' + well_name + '_GW_' + \
-                    time_min + '_' + time_max + '_1.png'
+                fig_name1 = Wellnest_name + "_" + well_name + "_GW_" + \
+                    time_min + "_" + time_max + "_1.png"
                 # Fig path
                 full_figpath = os.path.join(figpath, fig_name1)
                 # Saving fig
-                plt.savefig(full_figpath, dpi=150, bbox_inches='tight',
-                            format='png')
+                plt.savefig(full_figpath, dpi=150, bbox_inches="tight",
+                            format="png")
 
                 # Second figure
                 model.plots.results(tmin=ptime_min, tmax=ptime_max,
                                     figsize=(10, 6))
                 # Fig name
-                fig_name2 = Wellnest_name + '_' + well_name + '_GW_' + \
-                    time_min + '_' + time_max + '_2.png'
+                fig_name2 = Wellnest_name + "_" + well_name + "_GW_" + \
+                    time_min + "_" + time_max + "_2.png"
                 # Fig path
                 full_figpath = os.path.join(figpath, fig_name2)
                 # Saving fig
-                plt.savefig(full_figpath, dpi=150, bbox_inches='tight',
-                            format='png')
+                plt.savefig(full_figpath, dpi=150, bbox_inches="tight",
+                            format="png")
 
             # If not saving graphs
             else:

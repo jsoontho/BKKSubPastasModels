@@ -149,9 +149,9 @@ axs[2].grid(True, linestyle="dotted")
 # a), b), c) labels for paper
 for index, ax in enumerate(axs):
 
-    ax.text(-.1, 1.1, string.ascii_lowercase[index] + ")",
+    ax.text(.95, .1, "(" + string.ascii_lowercase[index] + ")",
             transform=ax.transAxes,
-            size=10, weight='bold')
+            size=10, weight="bold")
 
 # Saving
 path = "figures"
@@ -179,7 +179,7 @@ plt.rc("axes", labelsize=6)  # fontsize of the x and y labels
 plt.rc("xtick", labelsize=6)  # fontsize of the x tick labels
 plt.rc("ytick", labelsize=6)  # fontsize of the y tick labels
 plt.rc("legend", fontsize=5)  # fontsize of the legend
-plt.rcParams['legend.title_fontsize'] = 6  # fontsize of legend title
+plt.rcParams["legend.title_fontsize"] = 6  # fontsize of legend title
 
 # Plotting pumping
 # Reading in data
@@ -466,7 +466,7 @@ for num_well, wellnest in enumerate(wellnestlist):
     # Observed pumping
     ax2.plot(all_ann_subs[4][num_well][1].index[:44],
              all_ann_subs[4][num_well][1].CumTotSum.iloc[:44]*-100,  # mm
-             color="black", linewidth=1.5, label='_nolegend_')
+             color="black", linewidth=1.5, label="_nolegend_")
 
     # Plotting settings
     plt.legend(title="2060 Rate\n  (mm/yr)",
@@ -502,7 +502,7 @@ for index, ax in enumerate(axs):
 
     ax.text(-.2, 1.0, string.ascii_lowercase[index] + ")",
             transform=ax.transAxes,
-            size=10, weight='bold')
+            size=10, weight="bold")
 
 fig.set_size_inches(3.2, 6.4)
 plt.subplots_adjust(hspace=.1)

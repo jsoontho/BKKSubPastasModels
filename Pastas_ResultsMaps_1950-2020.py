@@ -34,12 +34,12 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 # %%###########################################################################
 # Plotting settings
 ###############################################################################
-plt.rc('font', size=12)  # controls default text size
-plt.rc('axes', titlesize=10)  # fontsize of the title
-plt.rc('axes', labelsize=8)  # fontsize of the x and y labels
-plt.rc('xtick', labelsize=8)  # fontsize of the x tick labels
-plt.rc('ytick', labelsize=8)  # fontsize of the y tick labels
-plt.rc('legend', fontsize=6)  # fontsize of the legend
+plt.rc("font", size=12)  # controls default text size
+plt.rc("axes", titlesize=10)  # fontsize of the title
+plt.rc("axes", labelsize=8)  # fontsize of the x and y labels
+plt.rc("xtick", labelsize=8)  # fontsize of the x tick labels
+plt.rc("ytick", labelsize=8)  # fontsize of the y tick labels
+plt.rc("legend", fontsize=6)  # fontsize of the legend
 
 # %% Importing Pastas
 
@@ -59,16 +59,16 @@ modelfiles = os.listdir(model_path)
 tot_path = os.path.abspath("inputs")
 
 files = os.listdir(tot_path)
-files = [i.replace('.xlsx', '') for i in files
-         if i.startswith('LC') and "_" not in i]
+files = [i.replace(".xlsx", "") for i in files
+         if i.startswith("LC") and "_" not in i]
 
 # Preallocation
 # Saving RMSE values for time period
 rmse = []
 
 # model time period
-time_min = '1950'
-time_max = '2020'
+time_min = "1950"
+time_max = "2020"
 
 # Saving R2 values
 R2 = []
@@ -104,7 +104,7 @@ subset_well_dict = {}
 for Wellnest_name in files:
 
     # Reading in groundwater data
-    full_path = os.path.join(tot_path, Wellnest_name + '.xlsx')
+    full_path = os.path.join(tot_path, Wellnest_name + ".xlsx")
     data = pd.read_excel(full_path, skiprows=3)
 
     # For all wells in well nest
@@ -150,11 +150,11 @@ for Wellnest_name in files:
 # Output: One graph, 2D plot with color indicator of RMSE for all 4 aq
 
 # Importing spatial coordinates
-full_path = os.path.join(tot_path, 'GroundwaterWellLocs.xls')
+full_path = os.path.join(tot_path, "GroundwaterWellLocs.xls")
 gwwell_locs = pd.read_excel(full_path)
 
 # Locations of wellnests removing duplicates
-gwwell_locs = gwwell_locs.drop_duplicates('WellNest_Name', keep='first')
+gwwell_locs = gwwell_locs.drop_duplicates("WellNest_Name", keep="first")
 
 # Aquifer of interest
 aqs = ["BK", "PD", "NL", "NB"]
@@ -207,7 +207,7 @@ for aq in aqs:
 
             # Label is well nest name
             label = gwwell_locs.loc[
-                gwwell_locs.Long == x]['WellNest_Name'].tolist()
+                gwwell_locs.Long == x]["WellNest_Name"].tolist()
             # Specific well nest does not have a well in the aquifer
             if label[0] not in wellnest_list:
                 continue
@@ -238,22 +238,22 @@ plt.set_cmap("coolwarm")  # Color map settings
 # Plots
 # Creating a basemap
 map = Basemap(llcrnrlon=100.3, llcrnrlat=13.4, urcrnrlon=100.8, urcrnrlat=14,
-              resolution='h', ellps='WGS84', lat_0=13.6, lon_0=100.4)
+              resolution="h", ellps="WGS84", lat_0=13.6, lon_0=100.4)
 
 bkk_sub_gw.bkk_plotting.draw_basemap(map, xs, ys, d_dict, fig=fig, ax=ax,
-                                     datalim=data_lim, mode='RMSE_full', save=0,
+                                     datalim=data_lim, mode="RMSE_full", save=0,
                                      aq=aq, perc=0,
                                      time_min=time_min, time_max=time_max,
                                      figpath=fig_path)
 
 # Saving figure
-fig_name1 = 'Paper_RMSE_' + time_min + '_' + time_max + '.png'
+fig_name1 = "Paper_RMSE_" + time_min + "_" + time_max + ".png"
 full_figpath = os.path.join(fig_path, fig_name1)
-plt.savefig(full_figpath, bbox_inches='tight', format='png')
+plt.savefig(full_figpath, bbox_inches="tight", format="png")
 
-fig_name1 = 'Paper_RMSE_' + time_min + '_' + time_max + '.eps'
+fig_name1 = "Paper_RMSE_" + time_min + "_" + time_max + ".eps"
 full_figpath = os.path.join(fig_path, fig_name1)
-plt.savefig(full_figpath, bbox_inches='tight', format='eps')
+plt.savefig(full_figpath, bbox_inches="tight", format="eps")
 
 # %%###########################################################################
 # Tmax Plotting
@@ -261,11 +261,11 @@ plt.savefig(full_figpath, bbox_inches='tight', format='eps')
 # One graph: 2D plot with color indicator of tmax for all 4 aq
 
 # Importing spatial coordinates
-full_path = os.path.join(tot_path, 'GroundwaterWellLocs.xls')
+full_path = os.path.join(tot_path, "GroundwaterWellLocs.xls")
 gwwell_locs = pd.read_excel(full_path)
 
 # Locations of wellnests; removing duplicates
-gwwell_locs = gwwell_locs.drop_duplicates('WellNest_Name', keep='first')
+gwwell_locs = gwwell_locs.drop_duplicates("WellNest_Name", keep="first")
 
 # Aquifer of interest
 aqs = ["BK", "PD", "NL", "NB"]
@@ -320,7 +320,7 @@ for aq in aqs:
 
             # Label is well nest name
             label = gwwell_locs.loc[
-                gwwell_locs.Long == x]['WellNest_Name'].tolist()
+                gwwell_locs.Long == x]["WellNest_Name"].tolist()
 
             # Specific well nest does not have a well in the aquifer
             if label[0] not in wellnest_list:
@@ -350,18 +350,18 @@ plt.set_cmap("plasma")  # Color map colors
 
 # Plots
 map = Basemap(llcrnrlon=100.3, llcrnrlat=13.4, urcrnrlon=100.8, urcrnrlat=14,
-              resolution='h', ellps='WGS84', lat_0=13.6, lon_0=100.4)
+              resolution="h", ellps="WGS84", lat_0=13.6, lon_0=100.4)
 bkk_sub_gw.bkk_plotting.draw_basemap(map, xs, ys, d_dict, fig=fig, ax=ax,
-                                     datalim=data_lim, mode='step_full', save=0,
+                                     datalim=data_lim, mode="step_full", save=0,
                                      aq=aq, perc=0,
                                      time_min=time_min, time_max=time_max,
                                      figpath=fig_path)
 
 # Saving Figures
-fig_name1 = 'Paper_tmax_' + time_min + '_' + time_max + '.png'
+fig_name1 = "Paper_tmax_" + time_min + "_" + time_max + ".png"
 full_figpath = os.path.join(fig_path, fig_name1)
-plt.savefig(full_figpath, bbox_inches='tight', format='png')
+plt.savefig(full_figpath, bbox_inches="tight", format="png")
 
-fig_name1 = 'Paper_tmax_' + time_min + '_' + time_max + '.eps'
+fig_name1 = "Paper_tmax_" + time_min + "_" + time_max + ".eps"
 full_figpath = os.path.join(fig_path, fig_name1)
-plt.savefig(full_figpath, bbox_inches='tight', format='eps')
+plt.savefig(full_figpath, bbox_inches="tight", format="eps")

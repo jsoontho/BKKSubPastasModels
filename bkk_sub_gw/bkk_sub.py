@@ -51,7 +51,7 @@ def bkk_wellnest_preproc(wellnestname, tmin, tmax, proxyflag):
     # Reading in GW data
     # Path to GW data
     try:
-        full_path = os.path.join(os.path.abspath("inputs"), wellnestname + '.xlsx')
+        full_path = os.path.join(os.path.abspath("inputs"), wellnestname + ".xlsx")
         data = pd.read_excel(full_path, skiprows=3)
 
     # If well nest does not exist
@@ -63,7 +63,7 @@ def bkk_wellnest_preproc(wellnestname, tmin, tmax, proxyflag):
 
     # Reorder well list to shallow to deep aquifers
     # BK, PD, NL, NB
-    welllist = [x for y in ['BK', 'PD', 'NL', 'NB'] for x in welllist
+    welllist = [x for y in ["BK", "PD", "NL", "NB"] for x in welllist
                 if y in x]
 
     # Returns all data, and specific well data if specified.
@@ -81,7 +81,7 @@ def bkk_wellnest_preproc(wellnestname, tmin, tmax, proxyflag):
         # Interpolating 'inside'
         interp_welldata.append(
             all_head_data.loc[:, i].dropna().
-            resample('D').interpolate("linear"))
+            resample("D").interpolate("linear"))
 
     lenlist = len(welllist)
 
@@ -297,15 +297,15 @@ def bkk_wellnest_preproc(wellnestname, tmin, tmax, proxyflag):
 
     # Well data with matching dates only
     well_data_dates = functools.reduce(lambda left, right:
-                                       pd.merge(left, right, on=['EngDate'],
-                                                how='inner'), well_data)
+                                       pd.merge(left, right, on=["EngDate"],
+                                                how="inner"), well_data)
     well_data_dates = well_data_dates[(well_data_dates.index.year >= int(tmin)) &
                                       well_data_dates.index.year <= int(tmax)]
 
     # All well data
     all_well_data = functools.reduce(lambda left, right:
-                                     pd.merge(left, right, on=['EngDate'],
-                                              how='outer', sort=True),
+                                     pd.merge(left, right, on=["EngDate"],
+                                              how="outer", sort=True),
                                      well_data)
 
     return well_data_dates, all_well_data
@@ -747,7 +747,7 @@ def pastas_pump(model, pump_path, pump_sheet):
 
     # Adds new pumping
     EstTotPump = pd.read_excel(pump_path, sheet_name=pump_sheet, index_col=0,
-                               parse_dates=['Date'])
+                               parse_dates=["Date"])
     EstTotPump_ = ps.StressModel(EstTotPump.Pump, rfunc=ps.Gamma(), name="well",
                                  settings="well", up=False)
     model.add_stressmodel(EstTotPump_)
@@ -814,7 +814,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
 
     # Each well nest has its own Ss and K sheet
     landsurf_data = pd.read_excel(landsurf_path,
-                                  sheet_name='2.1',
+                                  sheet_name="2.1",
                                   usecols="C:F",
                                   index_col=0)
 
@@ -827,14 +827,14 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
 
         # Each well nest has its own Ss and K sheet
         SS_data = pd.read_excel(SS_path,
-                                sheet_name='SS_Py',
+                                sheet_name="SS_Py",
                                 index_col=0)
 
     # For each well nest in the list
     for wellnest in wellnestlist:
 
         # If calculating subsidence from raw groundwater data
-        if mode == 'raw':
+        if mode == "raw":
 
             # Preprocesses wellnest groundwater data and returns dataframe
             # with data of matching dates after interpolation
@@ -865,7 +865,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
             # Reordering from shallowest to deepest aquifer
             # Reorder well list to shallow to deep aquifers
             # BK, PD, NL, NB
-            Pastasfiles = [x for y in ['_BK', '_PD', '_NL', '_NB']
+            Pastasfiles = [x for y in ["_BK", "_PD", "_NL", "_NB"]
                            for x in Pastasfiles if y in x]
             lenfiles = len(Pastasfiles)
 
@@ -904,7 +904,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             # Loads model, PD
                             temp = model.simulate(tmin="1950", tmax=tmax)
                             s = Pastasfiles[0]
-                            result = re.search('_(.*)_GW', s)
+                            result = re.search("_(.*)_GW", s)
                             temp = temp.rename(result.group(1))
                             well_data.append(temp)
 
@@ -920,7 +920,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
 
                             temp = model.simulate(tmin="1950", tmax=tmax)
                             s = Pastasfiles[1]
-                            result = re.search('_(.*)_GW', s)
+                            result = re.search("_(.*)_GW", s)
                             temp = temp.rename(result.group(1))
                             well_data.append(temp)
 
@@ -936,7 +936,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
 
                             temp = model.simulate(tmin="1950", tmax=tmax)
                             s = Pastasfiles[2]
-                            result = re.search('_(.*)_GW', s)
+                            result = re.search("_(.*)_GW", s)
                             temp = temp.rename(result.group(1))
                             well_data.append(temp)
 
@@ -968,7 +968,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             # Loads model, PD
                             temp = model.simulate(tmin="1950", tmax=tmax)
                             s = Pastasfiles[0]
-                            result = re.search('_(.*)_GW', s)
+                            result = re.search("_(.*)_GW", s)
                             temp = temp.rename(result.group(1))
                             well_data.append(temp)
 
@@ -989,7 +989,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             # Loads model, NB
                             temp = model.simulate(tmin="1950", tmax=tmax)
                             s = Pastasfiles[1]
-                            result = re.search('_(.*)_GW', s)
+                            result = re.search("_(.*)_GW", s)
                             temp = temp.rename(result.group(1))
                             well_data.append(temp)
 
@@ -1020,7 +1020,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             # Loads model, PD
                             temp = model.simulate(tmin="1950", tmax=tmax)
                             s = Pastasfiles[0]
-                            result = re.search('_(.*)_GW', s)
+                            result = re.search("_(.*)_GW", s)
                             temp = temp.rename(result.group(1))
                             well_data.append(temp)
 
@@ -1036,7 +1036,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
 
                             temp = model.simulate(tmin="1950", tmax=tmax)
                             s = Pastasfiles[0]
-                            result = re.search('_(.*)_GW', s)
+                            result = re.search("_(.*)_GW", s)
                             temp = temp.rename(result.group(1))
                             well_data.append(temp)
 
@@ -1077,7 +1077,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             # Loads model, NL
                             temp = model.simulate(tmin="1950", tmax=tmax)
                             s = Pastasfiles[0]
-                            result = re.search('_(.*)_GW', s)
+                            result = re.search("_(.*)_GW", s)
                             temp = temp.rename(result.group(1))
                             well_data.append(temp)
 
@@ -1093,7 +1093,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
 
                             temp = model.simulate(tmin="1950", tmax=tmax)
                             s = Pastasfiles[1]
-                            result = re.search('_(.*)_GW', s)
+                            result = re.search("_(.*)_GW", s)
                             temp = temp.rename(result.group(1))
                             well_data.append(temp)
 
@@ -1121,7 +1121,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
 
                             temp = model.simulate(tmin="1950", tmax=tmax)
                             s = Pastasfiles[0]
-                            result = re.search('_(.*)_GW', s)
+                            result = re.search("_(.*)_GW", s)
                             temp = temp.rename(result.group(1))
                             well_data.append(temp)
 
@@ -1160,7 +1160,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             # missing
                             temp = model.simulate(tmin="1950", tmax=tmax)
                             s = Pastasfiles[0]
-                            result = re.search('_(.*)_GW', s)
+                            result = re.search("_(.*)_GW", s)
                             temp = temp.rename(result.group(1))
                             well_data.append(temp)
 
@@ -1199,7 +1199,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             # missing
                             temp = model.simulate(tmin="1950", tmax=tmax)
                             s = Pastasfiles[0]
-                            result = re.search('_(.*)_GW', s)
+                            result = re.search("_(.*)_GW", s)
                             temp = temp.rename(result.group(1))
                             well_data.append(temp)
 
@@ -1238,7 +1238,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                             # missing
                             temp = model.simulate(tmin="1950", tmax=tmax)
                             s = Pastasfiles[0]
-                            result = re.search('_(.*)_GW', s)
+                            result = re.search("_(.*)_GW", s)
                             temp = temp.rename(result.group(1))
                             well_data.append(temp)
 
@@ -1279,7 +1279,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
 
                     temp = model.simulate(tmin="1950", tmax=tmax)
                     s = Pastasfiles[i]
-                    result = re.search('_(.*)_GW', s)
+                    result = re.search("_(.*)_GW", s)
                     temp = temp.rename(result.group(1))
                     well_data.append(temp)
 
@@ -1313,27 +1313,27 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
 
             # If clay layer BK aquifer
             if i == 1:
-                clay_name = 'VSC'
+                clay_name = "VSC"
                 aq_namet = "BK"
-                aq_nameb = 'BK'
+                aq_nameb = "BK"
 
             # If clay layer between BK and PD aquifer
             elif i == 2:
-                clay_name = 'MSC'
-                aq_namet = 'BK'
-                aq_nameb = 'PD'
+                clay_name = "MSC"
+                aq_namet = "BK"
+                aq_nameb = "PD"
 
             # If clay layer between PD and NL aquifer
             elif i == 3:
-                clay_name = 'SC'
-                aq_namet = 'PD'
-                aq_nameb = 'NL'
+                clay_name = "SC"
+                aq_namet = "PD"
+                aq_nameb = "NL"
 
             # If clay layer between NL and NB aquifer
             elif i == 4:
-                clay_name = 'HC'
-                aq_namet = 'NL'
-                aq_nameb = 'NB'
+                clay_name = "HC"
+                aq_namet = "NL"
+                aq_nameb = "NB"
 
             # Thickness data, thickness for the clay layer, and  top and
             # bottom aquifer
@@ -1437,9 +1437,9 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
             if ic_run:
 
                 # Create daily time series
-                df = pd.DataFrame(index=pd.date_range('1950-01-01',
+                df = pd.DataFrame(index=pd.date_range("1950-01-01",
                                                       headb.index[0],
-                                                      freq='d'))
+                                                      freq="d"))
 
                 # time
                 # Creating time time series [0: len of time series]
@@ -1796,17 +1796,17 @@ def bkk_postproc(wellnestlist, sub_total, subv_total, all_results):
         #  original date series
         date = all_results[num_well*4][3]
         # For each well nest, creating new data frame for the cum total sub sum
-        df_data = {'Date': date, 'CumTotSum': np.sum(cumsum_4cl, axis=0)}
+        df_data = {"Date": date, "CumTotSum": np.sum(cumsum_4cl, axis=0)}
         df = pd.DataFrame(df_data,
-                          columns=['Date', 'CumTotSum'],
+                          columns=["Date", "CumTotSum"],
                           index=date)
-        df['month'] = df.index.month
-        df['day'] = df.index.day
+        df["month"] = df.index.month
+        df["day"] = df.index.day
 
         # Resampling to each year
-        annual_data = df.CumTotSum[(df['month'] == 12) &
-                                   (df['day'] == 31)].to_frame()
-        annual_data['year'] = annual_data.index.year
+        annual_data = df.CumTotSum[(df["month"] == 12) &
+                                   (df["day"] == 31)].to_frame()
+        annual_data["year"] = annual_data.index.year
 
         # # IMPORTANT INFO
         # # For benchmark measurements, the first year is 0, the second year is
@@ -1820,7 +1820,7 @@ def bkk_postproc(wellnestlist, sub_total, subv_total, all_results):
         annual_data.loc[annual_data.index[-1] + pd.offsets.DateOffset(years=1)] = 0
         annual_data = annual_data.shift(1)  # Shifts all values down one year
         annual_data.iloc[0] = 0  # Sets first value as 0
-        annual_data.index = annual_data.index.shift(-12, freq='M')
+        annual_data.index = annual_data.index.shift(-12, freq="M")
 
         # Adding annual rates
         annual_data["AnnRates"] = annual_data.CumTotSum.diff()

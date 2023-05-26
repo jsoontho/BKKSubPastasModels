@@ -39,6 +39,8 @@ import matplotlib.ticker as mticker
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Wedge
 from statistics import median
+import string
+import matplotlib.lines as mlines
 
 
 # %%###########################################################################
@@ -143,7 +145,16 @@ def sub_bar(path, wellnestlist, all_results,
 
         # Figure plotting model results against measurements
         # Converts to cm to match measurements
-        plt.figure(figsize=(6.75, 3.38), dpi=400)
+        # set fig size certain way if running batch well nests
+        # Supplemental Information
+        if len(wellnestlist) > 1:
+
+            plt.figure(figsize=(6.75, 3.38), dpi=400)
+
+        # Paper size
+        else:
+
+            plt.figure(figsize=(6.75, 2), dpi=400)
 
         # Bar graph
         # annual data in cm
@@ -201,9 +212,9 @@ def sub_bar(path, wellnestlist, all_results,
             plt.ylabel("Annual Subsidence Rate (cm/yr)")
             plt.xlabel("Years")
             plt.annotate("RMSE: " + "{:.1f}".format(rms) + " cm/year",
-                         xy=(1, 0), xycoords="axes fraction",
+                         xy=(.99, .97), xycoords="axes fraction",
                          fontsize=10, horizontalalignment="right",
-                         verticalalignment="bottom")
+                         verticalalignment="top")
 
             # saving rmse
             rmse.append(rms)
@@ -222,7 +233,16 @@ def sub_bar(path, wellnestlist, all_results,
                                  "", "2014", "", "2016", "",
                                  "2018", "", "2020"])
         # Setting fig size again
-        plt.gcf().set_size_inches(6.75, 3.38)
+        # set fig size certain way if running batch well nests
+        # Supplemental Information
+        if len(wellnestlist) > 1:
+
+            plt.gcf().set_size_inches(6.75, 3.38)
+
+        # Paper size
+        else:
+
+            plt.gcf().set_size_inches(6.75, 2)
 
         # If saving figure
         if np.logical_and(save == 1, benchflag == 1):
@@ -232,21 +252,21 @@ def sub_bar(path, wellnestlist, all_results,
 
                 fig_name = wellnest + "_BenchvsImplicit_AnnSubTotal.eps"
                 full_figpath = os.path.join(path, fig_name)
-                plt.savefig(full_figpath, format="eps")
+                plt.savefig(full_figpath, format="eps", bbox_inches="tight")
 
                 fig_name = wellnest + "_BenchvsImplicit_AnnSubTotal.png"
                 full_figpath = os.path.join(path, fig_name)
-                plt.savefig(full_figpath, format="png")
+                plt.savefig(full_figpath, format="png", bbox_inches="tight")
 
             else:
 
                 fig_name = wellnest + "_BenchvsImplicit_AnnSubTotal_PAPER.eps"
                 full_figpath = os.path.join(path, fig_name)
-                plt.savefig(full_figpath, format="eps")
+                plt.savefig(full_figpath, format="eps", bbox_inches="tight")
 
                 fig_name = wellnest + "_BenchvsImplicit_AnnSubTotal_PAPER.png"
                 full_figpath = os.path.join(path, fig_name)
-                plt.savefig(full_figpath, format="png")
+                plt.savefig(full_figpath, format="png", bbox_inches="tight")
 
 
 def gwlocs_map(path, save=0):
@@ -1107,18 +1127,46 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
 
         x = np.array(x)
         y = np.array(y)
-        map.scatter(x[[1, 2, 6]], y[[1, 2, 6]], zorder=4, marker="o",
-                    color="k", label="Bad Fits", s=15)
-        map.scatter(x[[3, 5, 11, 12, 15, 20]], y[[3, 5, 11, 12, 15, 20]],
-                    zorder=4, marker="o",
-                    color="m", label="Noisy Observations", s=15)
-        map.scatter(x, y, s=30,
-                    c=np.multiply(cs, 1), zorder=3,
+        cs = np.array(cs)
+
+        # Grouping by regular (0), noisy (1), bad (2)
+        cluster = np.array([0, 2, 2, 1, 0,
+                            1, 2, 0, 0, 0,
+                            0, 1, 1, 0, 0,
+                            1, 0, 0, 0, 0,
+                            1, 0, 0])
+
+        # For the colorbar of each three
+        mini, maxi = np.min(cs), np.max(cs)
+        norm = plt.Normalize(mini, maxi)
+
+        map.scatter(x[cluster == 2], y[[cluster == 2]], zorder=3, marker="^",
+                    c=cs[cluster == 2], label="Bad Fits",
+                    cmap="RdYlBu_r", norm=norm, s=25,
+                    edgecolor="k", linewidth=.75)
+        map.scatter(x[cluster == 1], y[cluster == 1],
+                    c=cs[cluster == 1], marker="s",
+                    label="Noisy Observations",
+                    cmap="RdYlBu_r", norm=norm, s=25,
+                    edgecolor="k", linewidth=.75)
+        map.scatter(x[cluster == 0], y[cluster == 0], norm=norm, s=30,
+                    c=cs[cluster == 0], zorder=3,
                     marker="o", edgecolor="k",
                     cmap="RdYlBu_r", linewidth=.75)
 
         plt.clim(datalim)
-        plt.legend(loc="lower left", prop={'size': 4})
+        black_cirle = mlines.Line2D([], [], color="k", marker="o",
+                                    linestyle="None",
+                                    markersize=2, label="Good Fits")
+        black_triangle = mlines.Line2D([], [], color="k", marker="^",
+                                       linestyle="None",
+                                       markersize=2, label="Bad Fits")
+        black_square = mlines.Line2D([], [], color="k", marker="s",
+                                     linestyle="None",
+                                     markersize=2, label="Noisy Observations")
+        plt.legend(handles=[black_cirle, black_triangle, black_square],
+                   loc="lower right", prop={"size": 4})
+
         # New ax with dimensions of the colorbar
         cbar_ax = fig.add_axes([0.292, 0.05, 0.44, 0.03])
         cb = plt.colorbar(location="bottom", cax=cbar_ax, pad=0.05,
@@ -1525,8 +1573,14 @@ def Pastas_results(models, Wellnest_name, well_names,
             ax0.set_xlim(time_min, time_max)
 
             # Grids
-            for ax in fig.axes:
+            for index, ax in enumerate(fig.axes):
                 ax.grid(True)
+
+                # Graph labels
+                ax.text(0.01, .1, "(" + string.ascii_lowercase[index] + ")",
+                        transform=ax.transAxes,
+                        size=10, weight="bold")
+
             # No grids for inset graph
             axb.grid(False)
 

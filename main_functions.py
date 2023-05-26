@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import datetime as dt
 
 # Closing all figures
-plt.close('all')
+plt.close("all")
 
 
 ###############################################################################
@@ -41,19 +41,19 @@ def GW_Data_Process(GW_Data, well_name=None):
     # Ignoring first five lines
     # Replacing no date (-) with nans
     data = GW_Data.iloc[0:len(GW_Data)-5, :]
-    data = data.replace('-', np.nan)
+    data = data.replace("-", np.nan)
 
     # Creating data frame
     well_data = data.iloc[:, 1:]
-    df_data = well_data.rename(columns={'วันที่': 'Date'})
-    df_data.Date = df_data['Date'].astype(str)
+    df_data = well_data.rename(columns={"วันที่": "Date"})
+    df_data.Date = df_data["Date"].astype(str)
 
     # Reformating date from thai years to english years
     len_head = len(df_data.iloc[:, 1])
     date_list = []
-    df_data['Year'] = np.nan
-    df_data['Month'] = np.nan
-    df_data['Day'] = np.nan
+    df_data["Year"] = np.nan
+    df_data["Month"] = np.nan
+    df_data["Day"] = np.nan
 
     # For each data point
     for i in range(len_head):
@@ -62,7 +62,7 @@ def GW_Data_Process(GW_Data, well_name=None):
         date = df_data.Date.loc[i]
 
         # If leap day
-        if date[0:2] == '29' and date[3:5] == '02':
+        if date[0:2] == "29" and date[3:5] == "02":
 
             # Thai years - 543 = english years
             df_data.Year.loc[i] = int(date[6:10]) - 543
@@ -86,16 +86,16 @@ def GW_Data_Process(GW_Data, well_name=None):
             df_data.Day.loc[i] = (date_list[i].day)
 
     # Saving new english date
-    df_data['EngDate'] = pd.to_datetime(df_data[['Year', 'Month', 'Day']])
+    df_data["EngDate"] = pd.to_datetime(df_data[["Year", "Month", "Day"]])
 
     # If individual well name given
     if well_name is not None:
 
         # Subset of dataframe to get ready for Pastas
         # DTW data converted to approximate head using negative sign
-        head_subsetdata = {'Date': df_data.EngDate,
-                           'Head': - df_data[well_name].astype("float")}
-        Head_Data = pd.DataFrame(head_subsetdata, columns=['Date', 'Head'])
+        head_subsetdata = {"Date": df_data.EngDate,
+                           "Head": - df_data[well_name].astype("float")}
+        Head_Data = pd.DataFrame(head_subsetdata, columns=["Date", "Head"])
         Head_Data.index = pd.to_datetime(Head_Data.Date)
 
     # If individual head date not given
@@ -104,9 +104,12 @@ def GW_Data_Process(GW_Data, well_name=None):
 
     # Cleaning all data up
     # Returning head data not depth to water!
-    all_data = pd.concat([df_data['EngDate'], -well_data.iloc[:, 1:].astype(
-        "float")], axis=1,
-        keys=['Date'] + well_data.columns.values[1:])
+    if len(well_data.columns.values[1:]) > 1:
+        all_data = pd.concat([df_data["EngDate"], -well_data.iloc[:, 1:].astype("float")], axis=1,\
+                            keys=["Date"] + well_data.columns.values[1:])
+    else:
+        all_data = pd.concat([df_data["EngDate"], -well_data.iloc[:, 1:].astype("float")], axis=1)
+        
     if (np.size(-well_data.iloc[:, 1:], axis=1)) > 1:
         all_data = all_data.droplevel(level=0, axis=1)
 
