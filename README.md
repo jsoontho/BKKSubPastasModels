@@ -1,8 +1,8 @@
 # Models, data, and graphical results
-## for submitted *Groundwater* publication titled "Hybrid data-driven and physics-based modeling of groundwater and subsidence with an application to Bangkok, Thailand"
+## for submitted *Groundwater* publication titled "Hybrid data-driven, physics-based modeling of groundwater and subsidence with application to Bangkok, Thailand"
 ## Authors: Jenny T. Soonthornrangsan<sup>1</sup>, Mark Bakker<sup>2</sup>, Femke C. Vossepoel<sup>1</sup>
-##### <sup>1</sup>Department of Geoscience & Engineering, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
-##### <sup>2</sup>Department of Water Management, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
+##### <sup>1</sup>Department of Geoscience & Engineering, Faculty of Civil Engineering and Geoscience, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
+##### <sup>2</sup>Department of Water Management, Faculty of Civil Engineering and Geoscience, Delft University of Technology, Stevinweg 1, 2628 CN Delft, The Netherlands
 <br />
 <br />
 <br />
@@ -12,7 +12,7 @@ Various python scripts are provided that create different graphical results. Jup
 - `Figures.py`: Produces the figures shown in the main text of the paper
   - Notebook version: https://githubtocolab.com/jsoontho/BKKSubPastasModels/blob/main/JupyterNotebooks/Figures.ipynb
   
-- `SubsidenceModelResults_1978-2020.py`: Computes land subsidence at each well nest location. Plots annual subsidence rates (cm) bar graphs during 1978-2020 (Shown in the main text and supplemental information), error maps (subsidence RMSE for each well nest), forecast maps (2020-2060 in cm), sensitivity analysis (LCBKK013 for parameter sets Sske, Sskv, K, thickness; long run time so only calculating for one well nest at a time) (Shown in Supplemental Information)
+- `SubsidenceModelResults_1978-2020.py`: Computes land subsidence at each well nest location. Plots annual subsidence rates (cm) bar graphs during 1978-2020 (Shown in the main text and supplemental information), error maps (subsidence RMSE for each well nest), forecast maps (2020-2060 in cm), sensitivity analysis (LCBKK013 for parameter sets Sske (clay), Sske (sand), Sskv (clay), K (clay), thickness; long run time so only calculating for one well nest at a time) (Shown in Supplemental Information)
   - Notebook version: https://githubtocolab.com/jsoontho/BKKSubPastasModels/blob/main/JupyterNotebooks/SubsidenceModelResults_1978-2020.ipynb
 
 - `Pastas_ModelGraphs_1950-2020.py`: Creates Pastas models with the option to save and import the model as well as produces graphical results shown in the paper and supplemental information. Models simulate groundwater for each well nest
