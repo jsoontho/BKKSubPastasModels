@@ -26,7 +26,9 @@ Various python scripts are provided that create different graphical results. Jup
 <br />
 <br />
 
-`figures\` : graphs created from the scripts
+`figures\` : figures created from the scripts
+
+`figures_test\`: figures used in publication to be compared to output figures from script. Should match.
 
 `models\`: Pastas models created from Pastas_ModelGraphs_1950-2020.py script (Model files end with .pas)
 
