@@ -3,7 +3,12 @@
 Script for Thailand GW data pre-processing and post-plotting
 
 Thai GW data from http://tgms.dgr.go.th/
-Jenny Soonthornrangsan
+
+Article Title: Hybrid data-driven, physics-based modeling of ground-
+water and subsidence with application to Bangkok, Thailand
+
+Jenny Soonthornrangsan 2023
+TU Delft
 
 """
 ###############################################################################

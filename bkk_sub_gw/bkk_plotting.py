@@ -11,14 +11,20 @@ one well nest at a time) (Shown in supplemental information)
 3. Line graphs of cumulative subsidence (cm) into the future depending on the
 pumping scenario for each well nest during 1978-2060 (Shown in the main text and
 supplemental information)
+4. Spatial maps showing cumulative subsidence for each scenario for each
+well nest
 Groundwater
 4. Groundwater model graphical results shown in the paper and supplemental
 information. Simulated vs observed groundwater and inputs
 5. Spatial maps that show the groundwater RMSE and t190 results for each well in
 each well nest. Imports previously created Pastas models
 
+Article Title: Hybrid data-driven, physics-based modeling of ground-
+water and subsidence with application to Bangkok, Thailand
+
 Jenny Soonthornrangsan 2023
 TU Delft
+
 """
 # ##############################################################################
 

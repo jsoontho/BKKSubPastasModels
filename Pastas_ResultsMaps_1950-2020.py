@@ -6,8 +6,12 @@ A well nest may have 1-4 wells
 Outputs: Spatial maps
 Requires: previously created Pastas models
 
+Article Title: Hybrid data-driven, physics-based modeling of ground-
+water and subsidence with application to Bangkok, Thailand
+
 Jenny Soonthornrangsan 2023
 TU Delft
+
 """
 # ##############################################################################
 

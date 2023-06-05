@@ -5,10 +5,12 @@ BK, PD, NL, NB
 all are confined and overlain by clay layer
 Implicit method according to USGS SUB package Hoffman report pg. 14
 
-Output: Annual subsidence in a bar plot from 1978-2020
+Article Title: Hybrid data-driven, physics-based modeling of ground-
+water and subsidence with application to Bangkok, Thailand
 
 Jenny Soonthornrangsan 2023
 TU Delft
+
 """
 # ##############################################################################
 

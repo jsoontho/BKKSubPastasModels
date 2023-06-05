@@ -7,11 +7,12 @@ b) Groundwater well nest locations (Fig 6)
 c) Basin wide pumping, groundwater well forecasts, subsidence forecasts for well
 nest BKK013 (Fig 12)
 
-Article Title: Hybrid data-driven and physics-based modeling of ground-
-water and subsidence with an application to Bangkok, Thailand
+Article Title: Hybrid data-driven, physics-based modeling of ground-
+water and subsidence with application to Bangkok, Thailand
 
 Jenny Soonthornrangsan 2023
 TU Delft
+
 """
 # ##############################################################################
 

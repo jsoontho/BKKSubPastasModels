@@ -7,17 +7,28 @@ Implicit method according to USGS SUB package Hoffman report pg. 14
 
 Output:
 
-1. Bar graphs of annual subsidence (cm) for each well nest during 1978-2020
-(Shown in the main text and supplemental information)
-2. Line graphs of annual subsidence (cm) for sensitivity analyses of each parameter
-(Sskv, Sske, K, thickness) for one well nest (long run time so only calculating for
-one well nest at a time) (Shown in supplemental information)
-3. Line graphs of cumulative subsidence (cm) into the future depending on the
+1. Bar graph of annual subsidence (cm) for well nest BKK013 for 1979-2020
+(Figure 10 of main text)
+2. Bar graphs of annual subsidence (cm) for each well nest during 1978-2020
+(Shown in supplemental information)
+3. RMSE map of simulated annual subsidence vs observed from benchmark leveling
+stations
+4. Line graphs of cumulative subsidence (cm) into the future depending on the
 pumping scenario for each well nest during 1978-2060 (Shown in the main text and
 supplemental information)
+5. Map of cumulative subsidence for 2020-2060 for each well nest for each
+pumping scenario
+6. Line graphs of annual subsidence (cm) for sensitivity analyses of each parameter
+(Sskv, Sske, K, thickness) for one well nest (long run time so only calculating for
+one well nest at a time) (Shown in supplemental information)
+
+
+Article Title: Hybrid data-driven, physics-based modeling of ground-
+water and subsidence with application to Bangkok, Thailand
 
 Jenny Soonthornrangsan 2023
 TU Delft
+
 """
 # ##############################################################################
 
