@@ -500,7 +500,7 @@ axs[2] = ax2
 # a), b), c) labels for paper
 for index, ax in enumerate(axs):
 
-    ax.text(-.2, 1.0, string.ascii_lowercase[index] + ")",
+    ax.text(.02, .9, "(" + string.ascii_lowercase[index] + ")",
             transform=ax.transAxes,
             size=10, weight="bold")
 

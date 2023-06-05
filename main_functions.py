@@ -71,10 +71,10 @@ def GW_Data_Process(GW_Data, well_name=None):
 
             # Converting to date time format
             date_list.append(dt.datetime.strptime(str(df_data.Day.loc[i]).replace(
-                ".0", "") + "/"
-                    + str(df_data.Month.loc[i]).replace(".0", "") +
-                    "/" + str(df_data.Year.loc[i]).replace(".0", ""),
-                    "%d/%m/%Y").date())
+                ".0", "") + "/" +
+                str(df_data.Month.loc[i]).replace(".0", "") +
+                "/" + str(df_data.Year.loc[i]).replace(".0", ""),
+                "%d/%m/%Y").date())
 
         # If not a leap date
         else:
@@ -105,11 +105,15 @@ def GW_Data_Process(GW_Data, well_name=None):
     # Cleaning all data up
     # Returning head data not depth to water!
     if len(well_data.columns.values[1:]) > 1:
-        all_data = pd.concat([df_data["EngDate"], -well_data.iloc[:, 1:].astype("float")], axis=1,\
-                            keys=["Date"] + well_data.columns.values[1:])
+        all_data = pd.concat([df_data["EngDate"],
+                              -well_data.iloc[:, 1:].astype("float")],
+                             axis=1,
+                             keys=["Date"] + well_data.columns.values[1:])
     else:
-        all_data = pd.concat([df_data["EngDate"], -well_data.iloc[:, 1:].astype("float")], axis=1)
-        
+        all_data = pd.concat([df_data["EngDate"],
+                              -well_data.iloc[:, 1:].astype("float")],
+                             axis=1)
+
     if (np.size(-well_data.iloc[:, 1:], axis=1)) > 1:
         all_data = all_data.droplevel(level=0, axis=1)
 
