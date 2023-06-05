@@ -701,6 +701,11 @@ def sub_sens_line(path, wellnestlist, all_results,
         fig_name2 = wellnest + "_CumSubTotal_SENS_" + \
             mode + ".png"
 
+    # Just in case
+    else:
+        fig_name1 = "False"
+        fig_name2 = "False"
+
     # If saving figure
     if save == 1:
 
@@ -988,7 +993,7 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         cbar_ax = fig.add_axes([0.292, 0.05, 0.44, 0.03])
 
         # Colorbar
-        cb = fig.colorbar(p, ax=ax, cax=cbar_ax, location="bottom",
+        cb = fig.colorbar(p, ax=ax, cax=cbar_ax, orientation="horizontal",
                           pad=0.05, ticks=mticker.MultipleLocator(.5))
         cb.ax.tick_params(labelsize=5)
         cb.set_label("RMSE (m)", fontsize=5)
@@ -1086,7 +1091,7 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         cbar_ax = fig.add_axes([0.292, 0.05, 0.44, 0.03])
 
         # Colorbar
-        cb = fig.colorbar(p, ax=ax, cax=cbar_ax, location="bottom",
+        cb = fig.colorbar(p, ax=ax, cax=cbar_ax, orientation="horizontal",
                           pad=0.05,
                           ticks=mticker.MultipleLocator(5))
         cb.ax.tick_params(labelsize=5)
@@ -1175,7 +1180,7 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
 
         # New ax with dimensions of the colorbar
         cbar_ax = fig.add_axes([0.292, 0.05, 0.44, 0.03])
-        cb = plt.colorbar(location="bottom", cax=cbar_ax, pad=0.05,
+        cb = plt.colorbar(orientation="horizontal", cax=cbar_ax, pad=0.05,
                           ticks=mticker.MultipleLocator(.5))
         cb.ax.tick_params(labelsize=5)
         cb.set_label("RMSE (cm/year)", fontsize=5)
@@ -1261,7 +1266,7 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         # New ax with dimensions of the colorbar
         cbar_ax = fig.add_axes([0.292, 0.05, 0.44, 0.03])
         plt.set_cmap("BrBG")
-        cb = fig.colorbar(p, ax=ax, cax=cbar_ax, location="bottom",
+        cb = fig.colorbar(p, ax=ax, cax=cbar_ax, orientation="horizontal",
                           pad=0.05,
                           ticks=mticker.MultipleLocator(5))
         cb.ax.tick_params(labelsize=5)

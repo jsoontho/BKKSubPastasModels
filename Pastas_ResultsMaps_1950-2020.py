@@ -74,23 +74,6 @@ rmse = []
 time_min = "1950"
 time_max = "2020"
 
-# Saving R2 values
-R2 = []
-
-# Saving gains
-pump_A = []
-precip_A = []
-
-# Saving SD of gains
-SDpump_A = []
-SDprecip_A = []
-
-# Saving results of RUNS test
-runs = []
-
-# D constant
-d = []
-
 # step response tmax
 res_tmax = []
 
@@ -134,7 +117,7 @@ for Wellnest_name in files:
         # Saving rmse
         rmse_ = model.stats.rmse(tmin=time_min, tmax=time_max)
 
-        # Saving relative rmse
+        # Saving rmse
         rmse.append(Wellnest_name)
         rmse.extend((well_name, rmse_))
 
