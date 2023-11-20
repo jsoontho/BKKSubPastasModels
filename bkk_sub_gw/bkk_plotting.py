@@ -203,11 +203,14 @@ def sub_bar(path, wellnestlist, all_results,
             # Dropping NAs
             plot_data = plot_data.dropna()
 
-            # Calculating RMSE
-            rms = mean_squared_error(plot_data[
+            rms_data = plot_data[
                 plot_data.columns[
-                    plot_data.columns.str.contains("Land")].item()],
-                plot_data.AnnRates, squared=False)
+                    plot_data.columns.str.contains("Land")].item()]
+
+            # Calculating RMSE
+            rms = mean_squared_error(rms_data[rms_data != 0],
+                                     plot_data.AnnRates[rms_data != 0],
+                                     squared=False)
 
             # Plotting settings
             plt.legend(loc="center right")
@@ -1393,7 +1396,7 @@ def sub_forecast_map(path, wellnestlist, all_ann_subs,
 
     # Initializing figure
     fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=400)
-    datalim = [-5, 35]
+    datalim = [-5, 25]
     map = Basemap(llcrnrlon=100.3, llcrnrlat=13.4, urcrnrlon=100.8, urcrnrlat=14,
                   resolution="h", ellps="WGS84", lat_0=13.6, lon_0=100.4)
     draw_basemap(map, xs, ys, d_dict, fig=fig, ax=ax,

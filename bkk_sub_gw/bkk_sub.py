@@ -1037,7 +1037,7 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                                                     pump_sheet)
 
                             temp = model.simulate(tmin="1950", tmax=tmax)
-                            s = Pastasfiles[0]
+                            s = Pastasfiles[1]
                             result = re.search("_(.*)_GW", s)
                             temp = temp.rename(result.group(1))
                             well_data.append(temp)
@@ -1568,9 +1568,9 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                     # constant d
                     spacing = np.linspace(0, Nz+1, num=Nz+2, endpoint=True)
                     constant_d_ic = np.interp(spacing,
+                                              [0, Nz+1],
                                               [SS_data.loc[wellnest, aq_namet],
-                                               SS_data.loc[wellnest, aq_nameb]],
-                                              [0, Nz+1])
+                                               SS_data.loc[wellnest, aq_nameb]])
 
                 # If top clay layer i == 1
                 else:
@@ -1641,8 +1641,8 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                     # constant d
                     spacing = np.linspace(0, Nz+1, num=Nz+2, endpoint=True)
                     constant_d_ic = np.interp(spacing,
-                                              [0, SS_data.loc[wellnest, aq_nameb]],
-                                              [0, Nz+1])
+                                              [0, Nz+1],
+                                              [0, SS_data.loc[wellnest, aq_nameb]])
 
                 print(wellnest, " Clay " + str(i) + " Initial Condition\n")
 
