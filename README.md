@@ -7,7 +7,7 @@
 <br />
 <br />
 
-Current release:  DOI: 10.5281/zenodo.11096276
+Current release:  [![DOI](https://zenodo.org/badge/603990947.svg)](https://zenodo.org/doi/10.5281/zenodo.11096275)
 
 Various python scripts are provided that create different graphical results. Jupyter Note book versions are in `JupyterNotebooks\.`
 
