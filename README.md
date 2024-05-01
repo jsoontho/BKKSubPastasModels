@@ -7,6 +7,8 @@
 <br />
 <br />
 
+Current release:  DOI: 10.5281/zenodo.11096276
+
 Various python scripts are provided that create different graphical results. Jupyter Note book versions are in `JupyterNotebooks\.`
 
 - `Figures.py`: Produces the figures shown in the main text of the paper
