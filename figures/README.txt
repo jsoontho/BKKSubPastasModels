@@ -1,0 +1,1 @@
+Where figures go when python scripts are run
