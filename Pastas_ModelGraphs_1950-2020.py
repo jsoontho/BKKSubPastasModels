@@ -58,10 +58,10 @@ plt.rc("legend", fontsize=6)  # fontsize of the legend
 ###############################################################################
 
 # If saving model, save_model = 1
-save_model = 0
+save_model = 1
 
 # If importing previous saved models, import_model = 1
-import_model = 1
+import_model = 0
 
 # If saving graphs, save_graph = 1
 save_graph = 1
@@ -84,6 +84,10 @@ pump_basin_flag = 1
 
 # Pumping response function
 pump_rfunc = ps.Gamma()
+
+# Calibration period
+calitime_min = "1978"
+calitime_max = "2005"
 
 # Solver
 # Options: ps.LmfitSolve, ps.LeastSquares
@@ -258,14 +262,14 @@ for Wellnest_name in files:
                     # First run is not with noise model
                     # Gets first parameter estimates
                     # Warm up is 30 years
-                    model.solve(tmin=time_min, tmax=time_max,
+                    model.solve(tmin=calitime_min, tmax=calitime_max,
                                 report=False, noise=False,
                                 solver=ps.LeastSquares(), warmup=365*30)
 
                     # Second run with noise model using initial
                     # parameters as the calibrated parameters from
                     # first run
-                    model.solve(tmin=time_min, tmax=time_max,
+                    model.solve(tmin=calitime_min, tmax=calitime_max,
                                 initial=False, report=False,
                                 noise=noise_TF, solver=ps.LeastSquares(),
                                 warmup=365*30)
@@ -276,14 +280,14 @@ for Wellnest_name in files:
                     # First run is not with noise model
                     # Gets first parameter estimates
                     # Warm up is 30 years
-                    model.solve(tmin=time_min, tmax=time_max,
+                    model.solve(tmin=calitime_min, tmax=calitime_max,
                                 report=False, noise=False,
                                 solver=ps.LeastSquares(), warmup=365*30)
 
                     # Second run with noise model using initial
                     # parameters as the calibrated parameters from
                     # first run
-                    model.solve(tmin=time_min, tmax=time_max,
+                    model.solve(tmin=calitime_min, tmax=calitime_max,
                                 initial=False, report=False,
                                 noise=noise_TF, solver=ps.LeastSquares(),
                                 warmup=365*30)
@@ -296,7 +300,7 @@ for Wellnest_name in files:
             # If saving model
             if save_model == 1:
                 model.to_file(modelpath + "/" + Wellnest_name + "_" +
-                              well_name + "_GW_" + time_min + "_" + time_max +
+                              well_name + "_GW_" + calitime_min + "_" + calitime_max +
                               "_model.pas")
 
         #######################################################################
@@ -426,6 +430,10 @@ for Wellnest_name in files:
     # If replicating publication figures
     if paper_graph == 1:
 
+        # Calibrating
+        # If calibration and validating
+        califlag = [calitime_min, calitime_max]
         bkk_sub_gw.bkk_plotting.Pastas_results(models, Wellnest_name,
                                                well_names, time_mins,
-                                               time_maxs, figpath, save_graph)
+                                               time_maxs, figpath, save_graph,
+                                               califlag=califlag)

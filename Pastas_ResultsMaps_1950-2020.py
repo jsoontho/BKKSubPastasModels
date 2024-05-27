@@ -71,7 +71,7 @@ files = [i.replace(".xlsx", "") for i in files
 rmse = []
 
 # model time period
-time_min = "1950"
+time_min = "1978"
 time_max = "2020"
 
 # step response tmax
@@ -128,8 +128,65 @@ for Wellnest_name in files:
 
         # Saving range of obs for each model
         obs_range.append(Wellnest_name)
-        obs_range.extend((well_name, model.observations().max() -
-                          model.observations().min()))
+        obs_range.extend((well_name, model.observations(
+            tmin=time_min, tmax=time_max).max() - model.observations(
+                tmin=time_min, tmax=time_max).min()))
+
+# Obs range
+# Overall
+overall_range = np.mean(obs_range[2::3])
+# BK PD NL NB Range
+temp_BKrange = []
+temp_PDrange = []
+temp_NLrange = []
+temp_NBrange = []
+
+for i, j in enumerate(obs_range[1::3]):
+
+    if "BK" in j:
+        temp_BKrange.append(obs_range[2::3][i])
+
+    elif "PD" in j:
+        temp_PDrange.append(obs_range[2::3][i])
+
+    elif "NL" in j:
+        temp_NLrange.append(obs_range[2::3][i])
+
+    elif "NB" in j:
+        temp_NBrange.append(obs_range[2::3][i])
+
+BK_range = np.mean(temp_BKrange)
+PD_range = np.mean(temp_PDrange)
+NL_range = np.mean(temp_NLrange)
+NB_range = np.mean(temp_NBrange)
+
+# RMSE
+# Overall
+overall_rmse = np.mean(rmse[2::3])
+# BK PD NL NB Range
+temp_BKrmse = []
+temp_PDrmse = []
+temp_NLrmse = []
+temp_NBrmse = []
+
+for i, j in enumerate(rmse[1::3]):
+
+    if "BK" in j:
+        temp_BKrmse.append(rmse[2::3][i])
+
+    elif "PD" in j:
+        temp_PDrmse.append(rmse[2::3][i])
+
+    elif "NL" in j:
+        temp_NLrmse.append(rmse[2::3][i])
+
+    elif "NB" in j:
+        temp_NBrmse.append(rmse[2::3][i])
+
+BK_rmse = np.mean(temp_BKrmse)
+PD_rmse = np.mean(temp_PDrmse)
+NL_rmse = np.mean(temp_NLrmse)
+NB_rmse = np.mean(temp_NBrmse)
 
 # %%###########################################################################
 # RMSE Plotting
@@ -168,7 +225,7 @@ for aq in aqs:
     for i in rmse:
 
         # If string ie if the well nest or aquifer name
-        if type(i) == str:
+        if isinstance(i, str):
 
             # If the aquifer anem
             if i.startswith(aq):
@@ -280,7 +337,7 @@ for aq in aqs:
     for i in res_tmax:
 
         # If string (well nest or aquifer name)
-        if type(i) == str:
+        if isinstance(i, str):
 
             # If the aquifer name
             if i.startswith(aq):
@@ -332,6 +389,7 @@ fig, ax = plt.subplots(figsize=(3.2, 2.2), dpi=400)
 data_temp = [e for e in res_tmax if isinstance(e, float)]
 data_lim = [min(np.array(data_temp)[~mfs.is_outlier(data_temp, 3.5)]),
             max(np.array(data_temp)[~mfs.is_outlier(data_temp, 3.5)])]
+data_lim = [0, 18]
 
 plt.set_cmap("plasma")  # Color map colors
 
