@@ -600,6 +600,9 @@ def sub_sens_line(path, wellnestlist, all_results,
 
         coeff += 10
         color_coeff -= .1
+    print("Cum sub (cm): " +
+          str((annual_data[0][num_well][1].CumTotSum[-1] -
+               annual_data[-1][num_well][1].CumTotSum[-1])*100))
 
     print("Cum sub in time period relative to total sub (%): " +
           str((annual_data[0][num_well][1].CumTotSum[-1] -
@@ -997,7 +1000,7 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
 
         # Colorbar
         cb = fig.colorbar(p, ax=ax, cax=cbar_ax, orientation="horizontal",
-                          pad=0.05, ticks=mticker.MultipleLocator(.5))
+                          pad=0.05, ticks=mticker.MultipleLocator(1))
         cb.ax.tick_params(labelsize=5)
         cb.set_label("RMSE (m)", fontsize=5)
         plt.set_cmap("coolwarm")
@@ -1144,25 +1147,43 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
         cs = np.array(cs)
 
         # Grouping by regular (0), noisy (1), bad (2)
-        cluster = np.array([0, 2, 2, 1, 0,
-                            1, 2, 0, 0, 0,
-                            0, 1, 1, 0, 0,
-                            1, 0, 0, 0, 0,
-                            1, 0, 0])
+        # Manual cluster
+        # cluster = np.array([0, 2, 2, 1, 0,
+        #                     1, 2, 0, 0, 0,
+        #                     0, 1, 1, 0, 0,
+        #                     1, 0, 0, 0, 0,
+        #                     1, 0, 0])
+
+        # Hampel noise
+        cluster = np.array([0, 1, 1, 0, 0,
+                            1, 1, 0, 0, 0,
+                            0, 0, 1, 0, 0,
+                            1, 1, 0, 0, 0,
+                            0, 1, 0])
 
         # For the colorbar of each three
         mini, maxi = np.min(cs), np.max(cs)
         norm = plt.Normalize(mini, maxi)
 
-        map.scatter(x[cluster == 2], y[[cluster == 2]], zorder=3, marker="^",
-                    c=cs[cluster == 2], label="Bad Fits",
-                    cmap="RdYlBu_r", norm=norm, s=25,
-                    edgecolor="k", linewidth=.75)
         map.scatter(x[cluster == 1], y[cluster == 1],
                     c=cs[cluster == 1], marker="s",
                     label="Noisy Observations",
                     cmap="RdYlBu_r", norm=norm, s=25,
+                    edgecolor="k", linewidth=.75, zorder=3)
+
+        # Hampel noise
+        # Bad fits
+        cluster = np.array([0, 2, 2, 1, 0,
+                            1, 2, 0, 0, 0,
+                            0, 0, 1, 0, 0,
+                            1, 1, 0, 0, 0,
+                            1, 1, 0])
+
+        map.scatter(x[cluster == 2], y[cluster == 2], zorder=3, marker="^",
+                    c=cs[cluster == 2], label="Bad Fits",
+                    cmap="RdYlBu_r", norm=norm, s=25,
                     edgecolor="k", linewidth=.75)
+
         map.scatter(x[cluster == 0], y[cluster == 0], norm=norm, s=30,
                     c=cs[cluster == 0], zorder=3,
                     marker="o", edgecolor="k",
@@ -1428,7 +1449,8 @@ plt.rc("legend", fontsize=6)  # fontsize of the legend
 
 
 def Pastas_results(models, Wellnest_name, well_names,
-                   time_mins, time_maxs, figpath, save):
+                   time_mins, time_maxs, figpath, save,
+                   califlag=None):
     """Plot Pastas graphs that are in main paper.
 
     Wellnest_name - Name of well nest as a string
@@ -1438,6 +1460,7 @@ def Pastas_results(models, Wellnest_name, well_names,
     time_maxs - list of time maximum as string
     figpath - string path to save figure
     save - 1 to save figure, 0 to not save
+    califlag - [time_min, time_max] if calibration window; None else
     """
     # For each well in well names, determine order
     # Which well to start with because want BK, PD, NL, NB order
@@ -1478,7 +1501,7 @@ def Pastas_results(models, Wellnest_name, well_names,
 
         # Obs, simulation, residuals, stress time series
         # Observation time series
-        o = model.observations(tmin=time_min, tmax=time_max)
+        o = model.observations()
         o_nu = model.oseries.series.drop(o.index)
         o_nu = o_nu[time_min: time_max]
 
@@ -1510,14 +1533,29 @@ def Pastas_results(models, Wellnest_name, well_names,
                       markersize=1)
 
         # add rsq to simulation
-        rmse = model.stats.rmse(tmin=time_min, tmax=time_max)
+        if califlag is None:
+            rmse = model.stats.rmse(tmin=time_min, tmax=time_max)
 
-        # Simulation plot
-        sim.plot(ax=ax1, x_compat=True,
-                 label=f"Simulated (RMSE = {rmse:.2} m)",
-                 linewidth=1.5, color=color)
+            # Simulation plot
+            sim.plot(ax=ax1, x_compat=True,
+                     label=f"Simulated (RMSE = {rmse:.2} m)",
+                     linewidth=1.5, color=color)
+
+        else:
+            calirmse = model.stats.rmse(
+                tmin=califlag[0], tmax=califlag[1])
+            valirmse = model.stats.rmse(
+                tmin=califlag[1], tmax=time_max)
+            rmse = model.stats.rmse(tmin=time_min, tmax=time_max)
+
+            # Simulation plot
+            sim.plot(ax=ax1, x_compat=True,
+                     label=f"Simulated (RMSE = {calirmse:.2}, {valirmse:.2}, {rmse:.2} m)",
+                     linewidth=1.5, color=color)
 
         # Plot 1 settings
+        if califlag is not None:
+            ax1.axvspan(califlag[0], califlag[1], facecolor='tab:pink', alpha=0.25)
         ax1.set_ylabel("Head\n(m)", labelpad=0)
         ax1.legend(loc=(0, 1), ncol=3, frameon=False, numpoints=3,
                    fontsize=8)
@@ -1615,7 +1653,7 @@ def Pastas_results(models, Wellnest_name, well_names,
         # Save fig
         plt.savefig(full_figpath, dpi=400, bbox_inches="tight",
                     format="png")
-
+        fig.set_rasterized(True)
         # Fig name
         fig_name3 = Wellnest_name + "_GW_" + \
             time_min + "_" + time_max + "_PAPER.eps"

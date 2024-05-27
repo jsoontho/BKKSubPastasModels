@@ -30,6 +30,7 @@ import pastas as ps
 # Importing script for pre-processing Thai GW data
 import main_functions as mfs
 
+pd.options.mode.chained_assignment = None  # default='warn'
 
 # %%###########################################################################
 # Preprocessing GW well nest data
@@ -731,6 +732,1189 @@ def calc_deformation(timet, headt, headb, Kv, Sskv, Sske, Sske_sandt,
 
 
 # %%###########################################################################
+# Loads Pastas models
+##############################################################################
+
+def load_Pastas_models(Pastasfiles, model_path):
+    """ Loads Pastas models and saves models for use later (so that models can be
+    loaded only once)
+
+    Pastasfiles- list of Pastas file names to load
+    model_path - path of where files are located
+
+    Return:
+        models - list of Pastas models
+        well_names - list of well names (str)
+        modelinitparam - initial parameters
+    """
+    # Number of files
+    num_models = len(Pastasfiles)
+
+    # saves models
+    models = []
+
+    # saves well names for each model
+    well_names = []
+
+    # Pastas optimized parameters saved
+    pastas_optparam = []
+
+    # For each model
+    for num in range(num_models):
+
+        # Loads model
+        model = ps.io.load(model_path + "/" + Pastasfiles[num])
+        s = Pastasfiles[num]
+        result = re.search("_(.*)_GW", s)  # Gets well name
+
+        # Saving optimized parameters
+        pastas_optparam.append(model.parameters["optimal"])
+
+        # Saves
+        models.append(model)
+        well_names.append(result.group(1))
+
+    return models, well_names, np.array(pastas_optparam)
+
+
+# Future simulating Pastas with different pumping scenarios
+def pastas_setparam(model, pump_series=None, pump_path=None, pump_sheet=None,
+                    initoptiparam=None, well_name=None):
+    """Pastas model that is already created.
+
+    pump_series - if pump series given already
+    pump_path - path to pumping excel sheet
+    pump_sheet - sheet of specific pumping scenario
+    initoptiparam - optimal parameters provided or not
+    well_name - name of well
+    """
+
+    model.del_noisemodel()
+    stdparam = model.parameters["stderr"]
+
+    # Saves optimal parameters and SD
+    if initoptiparam is None:
+
+        optiparam = model.parameters["optimal"]
+
+        # If no pump series provided
+        if pump_series is None:
+
+            # If pump path provided
+            if pump_path is not None:
+                model.del_stressmodel("well")  # Deletes previous pumping
+
+                # Adds new pumping
+                EstTotPump = pd.read_excel(pump_path,
+                                           sheet_name=pump_sheet, index_col=0,
+                                           parse_dates=["Date"])
+
+                EstTotPump_ = ps.StressModel(EstTotPump.Pump,
+                                             rfunc=ps.Gamma(), name="well",
+                                             settings="well", up=False)
+                model.add_stressmodel(EstTotPump_, replace=True)
+
+        # If pumping series provided
+        else:
+
+            model.del_stressmodel("well")  # Deletes previous pumping
+
+            EstTotPump_ = ps.StressModel(pump_series, rfunc=ps.Gamma(), name="well",
+                                         settings="well", up=False)
+            model.add_stressmodel(EstTotPump_)
+
+        model.parameters["optimal"] = optiparam
+        model.parameters["initial"] = optiparam
+        model.parameters["stderr"] = stdparam
+
+    else:
+
+        # If no pump series provided
+        if pump_series is None:
+
+            # If pump path provided
+            if pump_path is not None:
+
+                model.del_stressmodel("well")  # Deletes previous pumping
+
+                # Adds new pumping
+                EstTotPump = pd.read_excel(pump_path,
+                                           sheet_name=pump_sheet, index_col=0,
+                                           parse_dates=["Date"])
+                EstTotPump_ = ps.StressModel(EstTotPump.Pump,
+                                             rfunc=ps.Gamma(), name="well",
+                                             settings="well", up=False)
+                model.add_stressmodel(EstTotPump_)
+
+        # If pumping series provided
+        else:
+
+            model.del_stressmodel("well")  # Deletes previous pumping
+
+            EstTotPump_ = ps.StressModel(pump_series, rfunc=ps.Gamma(), name="well",
+                                         settings="well", up=False)
+
+            model.add_stressmodel(EstTotPump_)
+
+        model.parameters["initial"] = initoptiparam.values
+        model.parameters["optimal"] = initoptiparam
+        model.parameters["stderr"] = stdparam
+
+    # Returns model
+    return model
+
+
+def load_Pastas(Pastasfiles, lenfiles, proxyflag, models, well_names,
+                model_path, pumpflag, tmin, tmax, pump_series=None,
+                pump_path=None, pump_sheet=None, initoptiparam=None):
+    """Loads Pastas models
+
+    Pastasfiles - list of Pastas file names
+    models - lsit of Pastas model instances
+    well_names - list of well names (str)
+    lenfiles - how many files there are
+    proxyflag - 1 if using available heads as proxy for missing heads
+    pump_path - path to pumping excel sheet
+    pump_sheet - sheet of specific pumping scenario
+    model_path - path to python models
+    pumpflag - 1 if changing pumping scenario for Pastas
+    tmin, tmax - (str) minimum and maximum year to calculate sub
+    initoptiparam - optimal parameters provided
+
+    Returns
+    well_data_dates - Well data with matching dates only
+    all_well4_data - all well data no matter the date
+    """
+    # well_data - where to save the data after loading Pasta files
+    well_data = []
+
+    # If using avaialbe heads as proxy for missing heads
+    if proxyflag == 1:
+
+        # For those missing wells, checks which well is missing
+        if lenfiles < 4:
+
+            # If only three files
+            # If first file in sorted list is PD, missing BK
+            if lenfiles == 3:
+
+                # For each well model
+                for num_model in range(len(well_names)):
+
+                    # Loads model, PD as proxy for BK
+                    model = models[num_model]
+
+                    curr_well = well_names[num_model]
+
+                    # If changing pumping scenario
+                    if pumpflag == 1:
+
+                        # If providing optimal parameters from ESMDA
+                        if initoptiparam is None:
+
+                            # If pumping time series given
+                            if pump_series is not None:
+                                model = pastas_setparam(model,
+                                                        well_name=curr_well,
+                                                        pump_series=pump_series[
+                                                            curr_well])
+
+                            # If path and sheet given instead
+                            elif pump_path is not None:
+                                # Updating model with new pumping scenario
+                                model = pastas_setparam(model, pump_path=pump_path,
+                                                        pump_sheet=pump_sheet)
+
+                        else:
+
+                            # If pumping time series given
+                            if pump_path is None:
+                                if pump_series is not None:
+                                    model = pastas_setparam(model,
+                                                            initoptiparam=initoptiparam.
+                                                            loc[
+                                                                curr_well],
+                                                            pump_series=pump_series[
+                                                                curr_well],
+                                                            well_name=curr_well,)
+
+                                else:
+                                    model = pastas_setparam(model,
+                                                            initoptiparam=initoptiparam.
+                                                            loc[
+                                                                curr_well],
+                                                            well_name=curr_well,)
+
+                            # If path and sheet given instead
+                            else:
+
+                                # Updating model with new pumping scenario
+                                model = pastas_setparam(model,
+                                                        initoptiparam=initoptiparam.
+                                                        loc[
+                                                            curr_well],
+                                                        well_name=curr_well,
+                                                        pump_path=pump_path,
+                                                        pump_sheet=pump_sheet)
+
+                    # If list starts with PD, means BK is missing
+                    if "_PD" in Pastasfiles[0]:
+
+                        # Identifies missing well and index
+                        missing = "BK"
+
+                        temp = model.simulate(tmin="1950", tmax=tmax,
+                                              warmup=365*30, return_warmup=False)
+                        temp = temp.rename("Proxy BK")  # Renames column
+                        well_data.append(temp)  # Saves data
+
+                        # Loads model, PD
+                        temp = temp.rename(curr_well)  # Renames column
+                        well_data.append(temp)  # Saves data
+
+                    # Adds NL and NB simulations
+                    else:
+
+                        temp = model.simulate(tmin="1950", tmax=tmax,
+                                              warmup=365*30, return_warmup=False)
+                        temp = temp.rename(curr_well)  # Renames col
+                        well_data.append(temp)  # Saves data
+
+            # If only two files
+            # If first file in sorted list is PD and next is NB
+            # missing BK and NL
+            if lenfiles == 2:
+
+                # For each well model
+                for num_model in range(len(well_names)):
+
+                    # Loads model, PD as proxy for BK
+                    model = models[num_model]
+
+                    curr_well = well_names[num_model]
+
+                    # If changing pumping scenario
+                    if pumpflag == 1:
+
+                        # If providing optimal parameters from ESMDA
+                        if initoptiparam is None:
+
+                            # If pumping time series given
+                            if pump_series is not None:
+                                model = pastas_setparam(model,
+                                                        well_name=curr_well,
+                                                        pump_series=pump_series[
+                                                            curr_well])
+
+                            # If path and sheet given instead
+                            elif pump_path is not None:
+                                # Updating model with new pumping scenario
+                                model = pastas_setparam(model, pump_path=pump_path,
+                                                        pump_sheet=pump_sheet)
+
+                        else:
+
+                            # If pumping time series given
+                            if pump_path is None:
+                                if pump_series is not None:
+                                    model = pastas_setparam(model,
+                                                            initoptiparam=initoptiparam.
+                                                            loc[
+                                                                curr_well],
+                                                            pump_series=pump_series[
+                                                                curr_well],
+                                                            well_name=curr_well,)
+
+                                else:
+                                    model = pastas_setparam(model,
+                                                            initoptiparam=initoptiparam.
+                                                            loc[
+                                                                curr_well],
+                                                            well_name=curr_well,)
+
+                            # If path and sheet given instead
+                            else:
+
+                                # Updating model with new pumping scenario
+                                model = pastas_setparam(model,
+                                                        initoptiparam=initoptiparam.
+                                                        loc[
+                                                            curr_well],
+                                                        well_name=curr_well,
+                                                        pump_path=pump_path,
+                                                        pump_sheet=pump_sheet)
+
+                    # If only PD and NB models
+                    if np.logical_and("_PD" in Pastasfiles[0],
+                                      "_NB" in Pastasfiles[1]):
+
+                        # Identifies missing well and index
+                        missing = "NL"
+
+                        # If PD
+                        if num_model == 0:
+
+                            proxy_name = "Proxy BK"
+
+                        # If NB
+                        else:
+
+                            proxy_name = "Proxy NL"
+
+                        temp = model.simulate(tmin="1950", tmax=tmax,
+                                              warmup=365*30, return_warmup=False)
+                        temp = temp.rename(proxy_name)
+                        well_data.append(temp)
+
+                        # Loads model, PD
+                        temp = temp.rename(curr_well)
+                        well_data.append(temp)
+
+                    # If only two files
+                    # If first file in sorted list is PD, next and NL
+                    # missing BK and NB
+                    if np.logical_and("_PD" in Pastasfiles[0],
+                                      "_NL" in Pastasfiles[1]):
+
+                        # Identifies missing well and index
+                        missing = "NB"
+
+                        # If PD
+                        if num_model == 0:
+
+                            proxy_name = "Proxy BK"
+                            temp = model.simulate(tmin="1950", tmax=tmax,
+                                                  warmup=365*30,
+                                                  return_warmup=False)
+                            temp = temp.rename(proxy_name)
+                            well_data.append(temp)
+
+                            # Loads model, PD
+                            temp = temp.rename(curr_well)
+                            well_data.append(temp)
+
+                        # If NB
+                        else:
+
+                            proxy_name = "Proxy NB"
+                            temp = model.simulate(tmin="1950", tmax=tmax,
+                                                  warmup=365*30,
+                                                  return_warmup=False)
+                            temp = temp.rename(curr_well)
+                            well_data.append(temp)
+
+                            # Loads model, NL as proxy for NB
+                            temp = temp.rename(proxy_name)
+                            well_data.append(temp)
+
+                # If only two files
+                # If first file in sorted list is NL, next and NB
+                # missing BK and PD
+
+                    if np.logical_and("_NL" in Pastasfiles[0],
+                                      "_NB" in Pastasfiles[1]):
+
+                        # Identifies missing well and index
+                        missing = "PD"
+
+                        # If NL
+                        if num_model == 0:
+
+                            temp = model.simulate(tmin="1950", tmax=tmax,
+                                                  warmup=365*30,
+                                                  return_warmup=False)
+                            temp = temp.rename("Proxy BK")
+                            well_data.append(temp)
+
+                            # Loads model, NL as proxy for PD, BK
+                            temp = temp.rename("Proxy PD")
+                            well_data.append(temp)
+
+                            # Loads model, NL
+                            temp = temp.rename(curr_well)
+                            well_data.append(temp)
+
+                        # NB
+                        else:
+
+                            temp = model.simulate(tmin="1950", tmax=tmax,
+                                                  warmup=365*30,
+                                                  return_warmup=False)
+                            temp = temp.rename(curr_well)
+                            well_data.append(temp)
+
+            # If only 1 file
+            # missing others
+            if lenfiles == 1:
+
+                missing = "others"
+
+                # For each well model
+                for num_model in range(len(well_names)):
+
+                    # Loads model, PD as proxy for BK
+                    model = models[num_model]
+
+                    curr_well = well_names[num_model]
+
+                    # If changing pumping scenario
+                    if pumpflag == 1:
+
+                        # If providing optimal parameters from ESMDA
+                        if initoptiparam is None:
+
+                            # If pumping time series given
+                            if pump_series is not None:
+                                model = pastas_setparam(model,
+                                                        well_name=curr_well,
+                                                        pump_series=pump_series[
+                                                            curr_well])
+
+                            # If path and sheet given instead
+                            elif pump_path is not None:
+                                # Updating model with new pumping scenario
+                                model = pastas_setparam(model, pump_path=pump_path,
+                                                        pump_sheet=pump_sheet)
+
+                        else:
+
+                            # If pumping time series given
+                            if pump_path is None:
+                                if pump_series is not None:
+                                    model = pastas_setparam(model,
+                                                            initoptiparam=initoptiparam.
+                                                            loc[
+                                                                curr_well],
+                                                            pump_series=pump_series[
+                                                                curr_well],
+                                                            well_name=curr_well,)
+
+                                else:
+                                    model = pastas_setparam(model,
+                                                            initoptiparam=initoptiparam.
+                                                            loc[
+                                                                curr_well],
+                                                            well_name=curr_well,)
+
+                            # If path and sheet given instead
+                            else:
+
+                                # Updating model with new pumping scenario
+                                model = pastas_setparam(model,
+                                                        initoptiparam=initoptiparam.
+                                                        loc[
+                                                            curr_well],
+                                                        well_name=curr_well,
+                                                        pump_path=pump_path,
+                                                        pump_sheet=pump_sheet)
+
+                    if "BK" in curr_well:
+                        temp = model.simulate(tmin="1950", tmax=tmax,
+                                              warmup=365*30,
+                                              return_warmup=False)
+                        temp = temp.rename(curr_well)
+                        well_data.append(temp)
+
+                        # Others proxy
+                        temp = temp.rename("Proxy PD")
+                        well_data.append(temp)
+
+                        # Others proxy
+                        temp = temp.rename("Proxy NL")
+                        well_data.append(temp)
+
+                        # Others proxy
+                        temp = temp.rename("Proxy NB")
+                        well_data.append(temp)
+
+                    elif "PD" in curr_well:
+
+                        temp = model.simulate(tmin="1950", tmax=tmax,
+                                              warmup=365*30,
+                                              return_warmup=False)
+                        temp = temp.rename("Proxy BK")
+                        well_data.append(temp)
+
+                        # Only head value as proxy for others that are
+                        # missing
+                        temp = temp.rename(curr_well)
+                        well_data.append(temp)
+
+                        # Proxy
+                        temp = temp.rename("Proxy NL")
+                        well_data.append(temp)
+
+                        # Proxy
+                        temp = temp.rename("Proxy NB")
+                        well_data.append(temp)
+
+                    elif "NL" in curr_well:
+
+                        temp = model.simulate(tmin="1950", tmax=tmax,
+                                              warmup=365*30,
+                                              return_warmup=False)
+                        temp = temp.rename("Proxy BK")
+                        well_data.append(temp)
+
+                        # Proxy
+                        temp = temp.rename("Proxy PD")
+                        well_data.append(temp)
+
+                        # Only head value as proxy for others that are
+                        # missing
+                        temp = temp.rename(curr_well)
+                        well_data.append(temp)
+
+                        # Proxy
+                        temp = temp.rename("Proxy NB")
+                        well_data.append(temp)
+
+                    elif "NB" in curr_well:
+
+                        temp = model.simulate(tmin="1950", tmax=tmax,
+                                              warmup=365*30,
+                                              return_warmup=False)
+                        temp = temp.rename("Proxy BK")
+                        well_data.append(temp)
+
+                        # Proxy
+                        temp = temp.rename("Proxy PD")
+                        well_data.append(temp)
+
+                        # Proxy
+                        temp = temp.rename("Proxy NL")
+                        well_data.append(temp)
+
+                        # Only head value as proxy for others that are
+                        # missing
+                        temp = temp.rename(curr_well)
+                        well_data.append(temp)
+
+        # No missing wells
+        else:
+
+            missing = None
+
+    # If using only available heads
+    else:
+        missing = None
+
+        # Needs all four wells if proxyflag is not on
+        if lenfiles < 4:
+
+            sys.exit("Needs all four wells if proxyflag is not on")
+
+    # If there is no missing data
+    if isinstance(missing, type(None)):
+
+        # For each well model
+        for num_model in range(len(well_names)):
+
+            # Loads model, PD as proxy for BK
+            model = models[num_model]
+
+            curr_well = well_names[num_model]
+
+            # If changing pumping scenario
+            if pumpflag == 1:
+
+                # If providing optimal parameters from ESMDA
+                if initoptiparam is None:
+
+                    # If pumping time series given
+                    if pump_series is not None:
+                        model = pastas_setparam(model,
+                                                well_name=curr_well,
+                                                pump_series=pump_series[
+                                                    curr_well])
+
+                    # If path and sheet given instead
+                    elif pump_path is not None:
+                        # Updating model with new pumping scenario
+                        model = pastas_setparam(model, pump_path=pump_path,
+                                                pump_sheet=pump_sheet)
+
+                else:
+
+                    # If pumping time series given
+                    if pump_path is None:
+                        if pump_series is not None:
+                            model = pastas_setparam(model,
+                                                    initoptiparam=initoptiparam.
+                                                    loc[
+                                                        curr_well],
+                                                    pump_series=pump_series[
+                                                        curr_well],
+                                                    well_name=curr_well,)
+
+                        else:
+                            model = pastas_setparam(model,
+                                                    initoptiparam=initoptiparam.
+                                                    loc[
+                                                        curr_well],
+                                                    well_name=curr_well,)
+
+                    # If path and sheet given instead
+                    else:
+
+                        # Updating model with new pumping scenario
+                        model = pastas_setparam(model,
+                                                initoptiparam=initoptiparam.loc[
+                                                    curr_well],
+                                                well_name=curr_well,
+                                                pump_path=pump_path,
+                                                pump_sheet=pump_sheet)
+
+            temp = model.simulate(tmin="1950", tmax=tmax,
+                                  warmup=365*30, return_warmup=False)
+            temp = temp.rename(curr_well)
+            well_data.append(temp)
+
+    # Well data with matching dates only
+    well_data_dates = functools.reduce(lambda left, right:
+                                       pd.merge(left, right,
+                                                left_index=True,
+                                                right_index=True),
+                                       well_data)
+    well_data_dates = well_data_dates[
+        (well_data_dates.index.year >= int(tmin)) &
+        (well_data_dates.index.year <= int(tmax))]
+
+    # All well data
+    all_well4_data = functools.reduce(lambda left, right:
+                                      pd.concat([left, right], axis=1,
+                                                sort=True),
+                                      well_data)
+
+    # well_data_dates - Well data with matching dates only
+    # all_well4_data - all well data no matter the date
+    return well_data_dates, all_well4_data
+
+
+# %%###########################################################################
+# Sets initial condition for subsidence run
+##############################################################################
+
+# Assuming has data for all four aquifers
+# Assuming conceptual model of clay above BK, between BK and PD, PD and NL, NL
+# and NB for a total of 4 clay layers.
+def set_ic(headb, headt, i, mode, fullheadt, fullheadb,
+           tmin, tmax, SS_data, wellnest, aq_namet, aq_nameb,
+           Kv_cl, Sskv_cl, Sske_cl, Sske_aqt, Sske_aqb, CC, Nz,
+           Thick_cl, nclay, Thick_aqt, Thick_aqb, Nt,
+           all_well_data=None):
+    """Runs groundwater models for aquifers to set initial conditions for clay
+    layers
+
+    headb - head of bottom aquifer
+    headt - head of top aquifer
+    i - current clay layer (1 - 4) where 1 is the top clay layer
+    mode - raw groundwater data or time series from pastas (raw needs to
+    to be interpolated). options: raw, pastas
+    all_well_data - raw observed groundwater data not within tmin and tmax
+    fullheadt - all Pastas simulated groundwater data from top aquifer despite the
+    date
+    fullheadb - all Pastas simulated groundwater data from bottom aquifer despite
+    the date
+    tmin, tmax - (str) minimum and maximum year to calculate sub
+    SS_data - steady state heads relative to land surface from coastal dem 2.1. SS
+    heads taken from MODFLOW model. Only used with no data from 1950 onwards but
+    Pastas was used to simulate from 1950 onwards. Shouldn't be used but is an
+    option
+    wellnest - string of well nest name
+    aq_namet - name of top aquifer
+    aq_nameb - name of bottom aquifer
+    Kv_cl - value of vertical hydraulic conductivity of clay layer
+    Sskv_cl - value of inelastic specific storage of clay layer
+    Sske_cl - value of elastic specific storage of clay layer
+    Sske_aqt - value of elastic specific storage of top aquifer layer
+    Sske_aqb - value of elastic specific storage of bottom aquifer layer
+    CC - convergence criteria
+    Nz - number of nodes in the z direction
+    Thick_cl - Thickness of clay layer
+    nclay - number of clay model layers
+    Thick_aqt - Thickness of top aquifer
+    Thick_aqb - thickness of bottom aquifer
+    Nt - number of time steps
+
+    Returns
+    t_ic - time for spin up run
+    h_ic - head for spin up run for clay model layers
+    """
+
+    # Create daily time series
+    df = pd.DataFrame(index=pd.date_range("1950-01-01",
+                                          headb.index[0],
+                                          freq="d"))
+
+    # time
+    # Creating time time series [0: len of time series]
+    timet_ic = np.arange(len(df.index))
+
+    # If not the first clay layer
+    if i != 1:
+
+        # First official model aquifer head in top and bottom
+        headt1 = headt.iloc[0]
+        headb1 = headb.iloc[0]
+
+        # Getting subset of dates that are before tmin to be used
+        # in linear interpolation of head
+        # Top
+        if mode == "raw":
+            subsetdate_t = all_well_data.index[np.logical_and(
+                ~all_well_data.iloc[:, i-2].isna(),
+                all_well_data.index < headt.index[0])]
+            interpdata = all_well_data.loc[
+                subsetdate_t].iloc[:, i-2]
+        elif mode == "Pastas":
+            subsetdate_t = fullheadt.index[np.logical_and(
+                ~fullheadt.isna(),
+                fullheadt.index.year < int(tmin))]
+            interpdata = fullheadt.loc[subsetdate_t]
+
+        # Getting subset of index of those dates that are before
+        # tmin to be used in linear interpolation of head
+        subsetindex_t = []
+
+        for j in range(len(subsetdate_t)):
+            subsetindex_t = np.append(subsetindex_t,
+                                      np.flatnonzero(
+                                          df.index ==
+                                          subsetdate_t[j]))
+
+        # If no earlier GW obs before model start
+        if len(subsetindex_t) == 0:
+
+            # Two values and will interpolate between
+            timet2_ic = [0, timet_ic[-1]]
+            headt2_ic = [SS_data.loc[wellnest, aq_namet], headt1]
+
+        # If there are GW obs before model start, uses it for
+        # llnear interpolation with SS heads
+        else:
+
+            # Converting to int
+            subsetindex_t = subsetindex_t.astype(int)
+
+            # Values and will interpolate between; time for
+            # interpolation
+            timet2_ic = np.insert(subsetindex_t, 0, 0)
+            timet2_ic = np.append(timet2_ic, timet_ic[-1])
+
+            # SS, head before model run, and first model head
+            # Values and will interpolate between
+            # Top aquifer
+            headt2_ic_subset = interpdata.values
+            headt2_ic = np.insert(headt2_ic_subset, 0,
+                                  SS_data.loc[wellnest, aq_namet])
+            headt2_ic = np.append(headt2_ic, headt1)
+
+        # Bottom
+        if mode == "raw":
+            subsetdate_b = all_well_data.index[np.logical_and(
+                ~all_well_data.iloc[:, i-1].isna(),
+                all_well_data.index < headb.index[0])]
+            interpdata = all_well_data.loc[
+                subsetdate_b].iloc[:, i-1]
+        elif mode == "Pastas":
+            subsetdate_b = fullheadb.index[np.logical_and(
+                ~fullheadb.isna(),
+                fullheadb.index.year < int(tmin))]
+            interpdata = fullheadb.loc[subsetdate_b]
+
+        # Getting subset of index of those dates that are before
+        # tmin to be used in linear interpolation of head
+        subsetindex_b = []
+
+        for j in range(len(subsetdate_b)):
+            subsetindex_b = np.append(subsetindex_b,
+                                      np.flatnonzero(
+                                          df.index ==
+                                          subsetdate_b[j]))
+
+        # If no earlier GW obs before model start
+        if len(subsetindex_b) == 0:
+            # Two values and will interpolate between
+            timeb2_ic = [0, timet_ic[-1]]
+            headb2_ic = [SS_data.loc[wellnest, aq_nameb], headb1]
+
+        # If there are GW obs before model start, uses it for
+        # llnear interpolation with SS heads
+        else:
+
+            # Converting to int
+            subsetindex_b = subsetindex_b.astype(int)
+
+            # Values and will interpolate between; time for
+            # interpolation
+            timeb2_ic = np.insert(subsetindex_b, 0, 0)
+            timeb2_ic = np.append(timeb2_ic, timet_ic[-1])
+
+            # SS, head before model run, and first model head
+            # Values and will interpolate between
+            # Bottom aquifer
+            headb2_ic_subset = interpdata.values
+            headb2_ic = np.insert(headb2_ic_subset, 0,
+                                  SS_data.loc[wellnest, aq_nameb])
+            headb2_ic = np.append(headb2_ic, headb1)
+
+        # Interpolating
+        headb_ic = pd.Series(np.interp(timet_ic, timeb2_ic,
+                                       headb2_ic))  # Linear
+        headb_ic.set_index = df.index
+        headt_ic = pd.Series(np.interp(timet_ic, timet2_ic,
+                                       headt2_ic))  # Linear
+        headt_ic.set_index = df.index
+
+        # Using Pastas constant d for initial condition
+        # Linearly interpolated between top and bottom
+        # constant d
+        spacing = np.linspace(0, Nz+1, num=Nz+2, endpoint=True)
+        constant_d_ic = np.interp(spacing,
+                                  [0, Nz+1],
+                                  [SS_data.loc[wellnest, aq_namet],
+                                   SS_data.loc[wellnest, aq_nameb]])
+
+    # If top clay layer i == 1
+    else:
+        # Last spin up run is the first value in the first model
+        # run
+        # First official model aquifer head in top and bottom
+        headb1 = headb.iloc[0]
+
+        # Getting subset of dates that are before tmin to be used
+        # in linear interpolation of head
+        # Bottom
+        if mode == "raw":
+            subsetdate_b = all_well_data.index[np.logical_and(
+                ~all_well_data.iloc[:, i-1].isna(),
+                all_well_data.index < headb.index[0])]
+            interpdata = all_well_data.loc[subsetdate_b].iloc[:, i]
+        elif mode == "Pastas":
+            subsetdate_b = fullheadb.index[np.logical_and(
+                ~fullheadb.isna(),
+                fullheadb.index.year < int(tmin))]
+            interpdata = fullheadb.loc[subsetdate_b]
+
+        # Getting subset of index of those dates that are before
+        # tmin to be used in linear interpolation of head
+        subsetindex_b = []
+
+        for j in range(len(subsetdate_b)):
+            subsetindex_b = np.append(subsetindex_b,
+                                      np.flatnonzero(
+                                          df.index ==
+                                          subsetdate_b[j]))
+
+        # If no earlier GW obs before model start
+        if len(subsetindex_b) == 0:
+            # Two values and will interpolate between
+            timeb2_ic = [0, timet_ic[-1]]
+            headb2_ic = [SS_data.loc[wellnest, aq_nameb], headb1]
+
+        # If there are GW obs before model start, uses it for
+        # llnear interpolation with SS heads
+        else:
+
+            # Converting to int
+            subsetindex_b = subsetindex_b.astype(int)
+
+            # Values and will interpolate between; time for
+            # interpolation
+            timeb2_ic = np.insert(subsetindex_b, 0, 0)
+            timeb2_ic = np.append(timeb2_ic, timet_ic[-1])
+
+            # SS, head before model run, and first model head
+            # Values and will interpolate between
+            # Bottom aquifer
+            headb2_ic_subset = interpdata.values
+            headb2_ic = np.insert(headb2_ic_subset, 0,
+                                  SS_data.loc[wellnest, aq_nameb])
+            headb2_ic = np.append(headb2_ic, headb1)
+
+        # Interpolating
+        headb_ic = pd.Series(np.interp(timet_ic, timeb2_ic,
+                                       headb2_ic))  # Linear
+        headb_ic.set_index = df.index
+
+        headt_ic = None
+
+        # Using Pastas constant d for initial condition
+        # Linearly interpolated between top and bottom
+        # constant d
+        spacing = np.linspace(0, Nz+1, num=Nz+2, endpoint=True)
+        constant_d_ic = np.interp(spacing,
+                                  [0, Nz+1],
+                                  [0, SS_data.loc[wellnest, aq_nameb]])
+
+    # print(wellnest, " Clay " + str(i) + " Initial Condition\n")
+    # Calculates sub
+    # Returns interpolated t, cum sub total, interp top head, bot
+    # head, cum sub inelastic, head matrix with top and bottom row
+    # as top and bottom aquifer (row is node, column is time)
+    t_ic, _, _, _, _, h_ic = \
+        calc_deformation(timet_ic, headt_ic, headb_ic, Kv_cl,
+                         Sskv_cl, Sske_cl, Sske_sandt=Sske_aqt,
+                         Sske_sandb=Sske_aqb, claythick=Thick_cl,
+                         nclay=nclay, sandthickt=Thick_aqt,
+                         sandthickb=Thick_aqb,
+                         Nz=Nz, CC=CC, Nt=Nt,
+                         ic=constant_d_ic)
+
+    # t_ic - time for spin up run
+    # h_ic - head for spin up run for clay model layers
+    return t_ic, h_ic
+
+
+# %%###########################################################################
+# Runs the bulk of code of the subsidence model for the four clay layers
+##############################################################################
+
+# Assuming has data for all four aquifers
+# Assuming conceptual model of clay above BK, between BK and PD, PD and NL, NL
+# and NB for a total of 4 clay layers.
+def run_sub(num_clay, all_well4_data, well_data_dates, mode,
+            tmin, tmax, SS_data, wellnest, K_data, Sskv_data, Sske_data, CC, Nz,
+            Thick_data, ic_run, sub_total, subv_total, all_results,
+            well_data=None):
+    """Runs code for bulk of subsidence modeling
+
+    num_clay - number of clay layers
+    Thick_data - thickness data for each well nest and layer
+    all_well4_data - all well data no matter the date
+    well_data_dates - well data with only overlapping dates
+    mode - raw groundwater data or time series from pastas (raw needs to
+    to be interpolated). options: raw, pastas
+    all_well_data - raw observed groundwater data not within tmin and tmax
+    tmin, tmax - (str) minimum and maximum year to calculate sub
+    K_data - vertical hydraulic conductivity data for each well nest and layer
+    Sske_data - elastic specific storage data for each well nest and layer
+    Sskv_data - inelastic specific storage data for each well nest and layer
+    SS_data - steady state heads relative to land surface from coastal dem 2.1. SS
+    heads taken from MODFLOW model. Only used with no data from 1950 onwards but
+    Pastas was used to simulate from 1950 onwards. Shouldn't be used but is an
+    option
+    wellnest - string of well nest name
+    ic_run - flag if running spin up run
+    sub_total - list of lists (stores results for total subsidence)
+    subv_total - list of lists (stores results for inelastic sub)
+    all_results - list of lists (stores all results)
+
+    Returns
+    sub_total - list of lists (stores results for total subsidence)
+    subv_total - list of lists (stores results for inelastic sub)
+    all_results - list of lists (stores all results)
+    """
+
+    # Keeps track of current z (bottom of layer)
+    curr_z = 0
+
+    # For each model
+    for i in range(1, num_clay+1):
+
+        # print(wellnest, " Clay " + str(i))
+
+        # Specifies index and clay layer names
+        # VSC = very soft clay, MSC = medium stiff clay, SC = stiff
+        # clay, HC = hard clay
+
+        # If clay layer BK aquifer
+        if i == 1:
+            clay_name = "VSC"
+            aq_namet = "BK"
+            aq_nameb = "BK"
+
+        # If clay layer between BK and PD aquifer
+        elif i == 2:
+            clay_name = "MSC"
+            aq_namet = "BK"
+            aq_nameb = "PD"
+
+        # If clay layer between PD and NL aquifer
+        elif i == 3:
+            clay_name = "SC"
+            aq_namet = "PD"
+            aq_nameb = "NL"
+
+        # If clay layer between NL and NB aquifer
+        elif i == 4:
+            clay_name = "HC"
+            aq_namet = "NL"
+            aq_nameb = "NB"
+
+        # Thickness data, thickness for the clay layer, and  top and
+        # bottom aquifer
+        Thick_cl = Thick_data.loc[wellnest, clay_name]
+        Thick_aqb = Thick_data.loc[wellnest, aq_nameb]
+        Thick_aqt = Thick_data.loc[wellnest, aq_namet]
+
+        # Time for both aquifers is the same
+        # If clay layer above BK, no aquifer above it
+        if i == 1:
+
+            if mode == "Pastas":
+
+                # BK head
+                # Only bottom aquifer
+                fullheadt = None
+                fullheadb = all_well4_data.iloc[:, i-1]
+                headb = well_data_dates.iloc[:, i-1]
+
+            elif mode == "raw":
+
+                # BK head
+                # No top aquifer, only bottom aquifer
+                headb = well_data.iloc[:, i-1]
+
+            # No top aquifer
+            headt = None
+
+            # Thickness/Specific storage of top aquifer is 0 because
+            # it doesn't exist
+            Thick_aqt = 0
+            Sske_aqt = 0
+
+        # All other clay layers not first or last
+        elif i != 4:
+
+            Thick_aqb /= 2  # NB aquifer not halved.
+            # Not simulating clay below it
+
+        # If not first aquifer
+        if i != 1:
+
+            if mode == "Pastas":
+
+                fullheadb = all_well4_data.iloc[:, i-1]
+                headb = well_data_dates.iloc[:, i-1]
+
+                fullheadt = all_well4_data.iloc[:, i-2]
+                headt = well_data_dates.iloc[:, i-2]
+
+            elif mode == "raw":
+
+                headb = well_data.iloc[:, i-1]
+                headt = well_data.iloc[:, i-2]
+
+            Sske_aqt = Sske_data.loc[wellnest, aq_namet]
+
+        # Creating time time series [0: len of time series]
+        timet = np.arange(len(headb.index))
+
+        # Thickness of top aquifer needs to be halved
+        # For all clay layers (top will be zero even if halved)
+        Thick_aqt /= 2
+
+        # Specific storage for clays, needed for DELAY CALCULATIONS
+        # Inelastic (v) and elastic (e)
+        Sskv_cl = Sskv_data.loc[wellnest, clay_name]
+        Sske_cl = Sske_data.loc[wellnest, clay_name]
+        Sske_aqb = Sske_data.loc[wellnest, aq_nameb]
+
+        # Kv for clays (m/day)
+        # Assuming Kv = Kh
+        # Using Chula value for BK clay for all clay values as starting
+        Kv_cl = K_data.loc[wellnest, clay_name]
+
+        # Number of clay layers
+        nclay = 1
+
+        # Number of time steps
+        Nt = 100
+
+        # z distribution, not used for calculation
+        # Only for plotting adnd reference
+        # mesh points in space
+        # Current z is at the bottom of the top aquifer
+        curr_z += Thick_aqt * 2
+
+        # Z distribution from bottom of top aq to
+        # bottom of clay
+        dz = Thick_cl/Nz
+        z = np.arange(curr_z + dz/2,
+                      curr_z + Thick_cl+dz/2,
+                      dz)
+        # Current z updated to now bottom of clay
+        z = np.insert(z, 0, curr_z)
+        curr_z += Thick_cl
+        z = np.append(z, curr_z)
+
+        # If running transient simulation before model run
+        # to get clay heads to where they need to be
+        if ic_run:
+
+            t_ic, h_ic = set_ic(headb, headt, i, mode, fullheadt,
+                                fullheadb, tmin, tmax, SS_data, wellnest,
+                                aq_namet, aq_nameb, Kv_cl, Sskv_cl, Sske_cl,
+                                Sske_aqt, Sske_aqb, CC, Nz, Thick_cl, nclay,
+                                Thick_aqt, Thick_aqb, Nt)
+
+            # Calculates sub
+            # Returns interpolated t, cum sub total, interp top head, bot
+            # head, cum sub inelastic, head matrix with top and bottom row
+            # as top and bottom aquifer (row is node, column is time)
+            interp_t, sub, boundaryt, boundaryb, sub_v, h = \
+                calc_deformation(timet, headt, headb, Kv_cl,
+                                 Sskv_cl, Sske_cl, Sske_sandt=Sske_aqt,
+                                 Sske_sandb=Sske_aqb, claythick=Thick_cl,
+                                 nclay=nclay, sandthickt=Thick_aqt,
+                                 sandthickb=Thick_aqb,
+                                 Nz=Nz, CC=CC, Nt=Nt,
+                                 ic=h_ic[:, -1])
+
+        # If not running to get initial condition
+        else:
+
+            # Calculates sub
+            # Returns interpolated t, cum sub total, interp top head, bot
+            # head, cum sub inelastic, head matrix with top and bottom row
+            # as top and bottom aquifer (row is node, column is time)
+            interp_t, sub, boundaryt, boundaryb, sub_v, h = \
+                calc_deformation(timet, headt, headb, Kv_cl,
+                                 Sskv_cl, Sske_cl, Sske_sandt=Sske_aqt,
+                                 Sske_sandb=Sske_aqb, claythick=Thick_cl,
+                                 nclay=nclay, sandthickt=Thick_aqt,
+                                 sandthickb=Thick_aqb,
+                                 Nz=Nz, CC=CC, Nt=Nt)
+        # Well names
+        if mode == "Pastas":
+
+            # Getting well name from Pastas model file name
+            well_name = all_well4_data.columns[i-1]
+
+        elif mode == "raw":
+
+            well_name = well_data.columns[i-1]
+
+        # Adds subsidence to total of all clay
+        # Stores records as wellnest, well, data in list
+        sub_total.append([wellnest, well_name,
+                          interp_t, sub])
+        subv_total.append([wellnest, well_name,
+                           interp_t, sub_v])
+
+        # If running transient simulation before model run
+        # to get clay heads to where they need to be
+        if ic_run:
+
+            # Saves heads in clay nodes, z distribution
+            # time original (original time series (0:len(date))), date
+            # Saves initial condition head and initial condition time
+            all_results.append([wellnest, well_name,
+                                timet, headb.index, h, z, t_ic, h_ic])
+
+        else:
+
+            # Saves heads in clay nodes, z distribution
+            # time original (original time series (0:len(date))), date
+            all_results.append([wellnest, well_name,
+                                timet, headb.index, h, z])
+
+    return sub_total, subv_total, all_results
+
+
+# %%###########################################################################
 # Pastas model forecasting: simulates groundwater using different
 # pumping scenarios
 ##############################################################################
@@ -772,7 +1956,8 @@ def pastas_pump(model, pump_path, pump_sheet):
 def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                    Thick_data, K_data, Sskv_data, Sske_data, CC, Nz, ic_run,
                    proxyflag, pumpflag, model_path=None, pump_path=None,
-                   pump_sheet=None):
+                   pump_sheet=None, pump_series=None,
+                   initoptiparam=None,):
     """Calculate sub for four clay layers and four confined aquifers.
 
     wellnestlist - list of wellnest to calculate subsidence for
@@ -853,9 +2038,6 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
             # Number clay layers
             num_clay = len(well_data.columns)
 
-            # Keeps track of current z (bottom of layer)
-            curr_z = 0
-
         elif mode == "Pastas":
 
             # Get Pastas model file names for each wellnest (Should have four
@@ -871,858 +2053,37 @@ def bkk_subsidence(wellnestlist, mode, tmin, tmax,
                            for x in Pastasfiles if y in x]
             lenfiles = len(Pastasfiles)
 
-            # Stores data for all four wells
-            well_data = []
+            # Loading models for good
+            models, well_names, pastas_optparam = load_Pastas_models(
+                Pastasfiles, model_path)
+
+            well_data_dates, \
+                all_well4_data = load_Pastas(Pastasfiles,
+                                             lenfiles,
+                                             proxyflag, models,
+                                             well_names,
+                                             model_path,
+                                             pumpflag,
+                                             tmin, tmax,
+                                             initoptiparam=initoptiparam,
+                                             pump_path=pump_path,
+                                             pump_sheet=pump_sheet,
+                                             pump_series=pump_series
+                                             )
 
-            # If using avaialbe heads as proxy for missing heads
-            if proxyflag == 1:
-
-                # For those missing wells, checks which well is missing
-                if lenfiles < 4:
-
-                    # If only three files
-                    # If first file in sorted list is PD, missing BK
-                    if lenfiles == 3:
-
-                        if "_PD" in Pastasfiles[0]:
-
-                            # Identifies missing well and index
-                            missing = "BK"
-
-                            # Loads model, PD as proxy for BK
-                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
-
-                            # If changing pumping scenario
-                            if pumpflag == 1:
-
-                                # Updating model with new pumping scenario
-                                model = pastas_pump(model, pump_path,
-                                                    pump_sheet)
-
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy BK")
-                            well_data.append(temp)
-
-                            # Loads model, PD
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            s = Pastasfiles[0]
-                            result = re.search("_(.*)_GW", s)
-                            temp = temp.rename(result.group(1))
-                            well_data.append(temp)
-
-                            # Loads model, NL
-                            model = ps.io.load(model_path + "/" + Pastasfiles[1])
-
-                            # If changing pumping scenario
-                            if pumpflag == 1:
-
-                                # Updating model with new pumping scenario
-                                model = pastas_pump(model, pump_path,
-                                                    pump_sheet)
-
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            s = Pastasfiles[1]
-                            result = re.search("_(.*)_GW", s)
-                            temp = temp.rename(result.group(1))
-                            well_data.append(temp)
-
-                            # Loads model, NB
-                            model = ps.io.load(model_path + "/" + Pastasfiles[2])
-
-                            # If changing pumping scenario
-                            if pumpflag == 1:
-
-                                # Updating model with new pumping scenario
-                                model = pastas_pump(model, pump_path,
-                                                    pump_sheet)
-
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            s = Pastasfiles[2]
-                            result = re.search("_(.*)_GW", s)
-                            temp = temp.rename(result.group(1))
-                            well_data.append(temp)
-
-                    # If only two files
-                    # If first file in sorted list is PD and next is NB
-                    # missing BK and NL
-                    if lenfiles == 2:
-
-                        if np.logical_and("_PD" in Pastasfiles[0],
-                                          "_NB" in Pastasfiles[1]):
-
-                            # Identifies missing well and index
-                            missing = "NL"
-
-                            # Loads model, PD as proxy for BK
-                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
-
-                            # If changing pumping scenario
-                            if pumpflag == 1:
-
-                                # Updating model with new pumping scenario
-                                model = pastas_pump(model, pump_path,
-                                                    pump_sheet)
-
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy BK")
-                            well_data.append(temp)
-
-                            # Loads model, PD
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            s = Pastasfiles[0]
-                            result = re.search("_(.*)_GW", s)
-                            temp = temp.rename(result.group(1))
-                            well_data.append(temp)
-
-                            # Loads model, NB as proxy for NL
-                            model = ps.io.load(model_path + "/" + Pastasfiles[1])
-
-                            # If changing pumping scenario
-                            if pumpflag == 1:
-
-                                # Updating model with new pumping scenario
-                                model = pastas_pump(model, pump_path,
-                                                    pump_sheet)
-
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy NL")
-                            well_data.append(temp)
-
-                            # Loads model, NB
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            s = Pastasfiles[1]
-                            result = re.search("_(.*)_GW", s)
-                            temp = temp.rename(result.group(1))
-                            well_data.append(temp)
-
-                    # If only two files
-                    # If first file in sorted list is PD, next and NL
-                    # missing BK and NB
-
-                        if np.logical_and("_PD" in Pastasfiles[0],
-                                          "_NL" in Pastasfiles[1]):
-
-                            # Identifies missing well and index
-                            missing = "NB"
-
-                            # Loads model, PD as proxy for BK
-                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
-
-                            # If changing pumping scenario
-                            if pumpflag == 1:
-
-                                # Updating model with new pumping scenario
-                                model = pastas_pump(model, pump_path,
-                                                    pump_sheet)
-
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy BK")
-                            well_data.append(temp)
-
-                            # Loads model, PD
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            s = Pastasfiles[0]
-                            result = re.search("_(.*)_GW", s)
-                            temp = temp.rename(result.group(1))
-                            well_data.append(temp)
-
-                            # Loads model, NL
-                            model = ps.io.load(model_path + "/" + Pastasfiles[1])
-
-                            # If changing pumping scenario
-                            if pumpflag == 1:
-
-                                # Updating model with new pumping scenario
-                                model = pastas_pump(model, pump_path,
-                                                    pump_sheet)
-
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            s = Pastasfiles[1]
-                            result = re.search("_(.*)_GW", s)
-                            temp = temp.rename(result.group(1))
-                            well_data.append(temp)
-
-                            # Loads model, NL as proxy for NB
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy NB")
-                            well_data.append(temp)
-
-                    # If only two files
-                    # If first file in sorted list is NL, next and NB
-                    # missing BK and PD
-
-                        if np.logical_and("_NL" in Pastasfiles[0],
-                                          "_NB" in Pastasfiles[1]):
-
-                            # Identifies missing well and index
-                            missing = "PD"
-
-                            # Loads model, NL as proxy for PD, BK
-                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
-
-                            # If changing pumping scenario
-                            if pumpflag == 1:
-
-                                # Updating model with new pumping scenario
-                                model = pastas_pump(model, pump_path,
-                                                    pump_sheet)
-
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy BK")
-                            well_data.append(temp)
-
-                            # Loads model, NL as proxy for PD, BK
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy PD")
-                            well_data.append(temp)
-
-                            # Loads model, NL
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            s = Pastasfiles[0]
-                            result = re.search("_(.*)_GW", s)
-                            temp = temp.rename(result.group(1))
-                            well_data.append(temp)
-
-                            # Loads model, NB
-                            model = ps.io.load(model_path + "/" + Pastasfiles[1])
-
-                            # If changing pumping scenario
-                            if pumpflag == 1:
-
-                                # Updating model with new pumping scenario
-                                model = pastas_pump(model, pump_path,
-                                                    pump_sheet)
-
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            s = Pastasfiles[1]
-                            result = re.search("_(.*)_GW", s)
-                            temp = temp.rename(result.group(1))
-                            well_data.append(temp)
-
-                    # If only 1 file
-                    # missing others
-                    if lenfiles == 1:
-
-                        missing = "others"
-
-                        # Only has which?
-                        if "_BK" in Pastasfiles[0]:
-
-                            # Identifies missing well and index
-
-                            # Only head value as proxy for others that are
-                            # missing
-                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
-
-                            # If changing pumping scenario
-                            if pumpflag == 1:
-
-                                # Updating model with new pumping scenario
-                                model = pastas_pump(model, pump_path,
-                                                    pump_sheet)
-
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            s = Pastasfiles[0]
-                            result = re.search("_(.*)_GW", s)
-                            temp = temp.rename(result.group(1))
-                            well_data.append(temp)
-
-                            # Others proxy
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy PD")
-                            well_data.append(temp)
-
-                            # Others proxy
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy NL")
-                            well_data.append(temp)
-
-                            # Others proxy
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy NB")
-                            well_data.append(temp)
-
-                        elif "_PD" in Pastasfiles[0]:
-
-                            # Proxy
-                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
-
-                            # If changing pumping scenario
-                            if pumpflag == 1:
-
-                                # Updating model with new pumping scenario
-                                model = pastas_pump(model, pump_path,
-                                                    pump_sheet)
-
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy BK")
-                            well_data.append(temp)
-
-                            # Only head value as proxy for others that are
-                            # missing
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            s = Pastasfiles[0]
-                            result = re.search("_(.*)_GW", s)
-                            temp = temp.rename(result.group(1))
-                            well_data.append(temp)
-
-                            # Proxy
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy NL")
-                            well_data.append(temp)
-
-                            # Proxy
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy NB")
-                            well_data.append(temp)
-
-                        elif "_NL" in Pastasfiles[0]:
-
-                            # Proxy
-                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
-
-                            # If changing pumping scenario
-                            if pumpflag == 1:
-
-                                # Updating model with new pumping scenario
-                                model = pastas_pump(model, pump_path,
-                                                    pump_sheet)
-
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy BK")
-                            well_data.append(temp)
-
-                            # Proxy
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy PD")
-                            well_data.append(temp)
-
-                            # Only head value as proxy for others that are
-                            # missing
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            s = Pastasfiles[0]
-                            result = re.search("_(.*)_GW", s)
-                            temp = temp.rename(result.group(1))
-                            well_data.append(temp)
-
-                            # Proxy
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy NB")
-                            well_data.append(temp)
-
-                        elif "_NB" in Pastasfiles[0]:
-
-                            # Proxy
-                            model = ps.io.load(model_path + "/" + Pastasfiles[0])
-
-                            # If changing pumping scenario
-                            if pumpflag == 1:
-
-                                # Updating model with new pumping scenario
-                                model = pastas_pump(model, pump_path,
-                                                    pump_sheet)
-
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy BK")
-                            well_data.append(temp)
-
-                            # Proxy
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy PD")
-                            well_data.append(temp)
-
-                            # Proxy
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            temp = temp.rename("Proxy NL")
-                            well_data.append(temp)
-
-                            # Only head value as proxy for others that are
-                            # missing
-                            temp = model.simulate(tmin="1950", tmax=tmax)
-                            s = Pastasfiles[0]
-                            result = re.search("_(.*)_GW", s)
-                            temp = temp.rename(result.group(1))
-                            well_data.append(temp)
-
-                # No missing wells
-                else:
-
-                    missing = None
-
-            # If using only available heads
-            else:
-                missing = None
-
-                # Needs all four wells if proxyflag is not on
-                if lenfiles < 4:
-
-                    sys.exit("Needs all four wells if proxyflag is not on")
-
-            # Number clay layers (always four with assigning missing
-            # aquifer heads)
             num_clay = 4
 
-            # If there is no missing data
-            if isinstance(missing, type(None)):
-
-                # Loads data for each well
-                # For each well in welllist
-                for i in range(num_clay):
-
-                    # Loads model
-                    model = ps.io.load(model_path + "/" + Pastasfiles[i])
-
-                    # If changing pumping scenario
-                    if pumpflag == 1:
-
-                        # Updating model with new pumping scenario
-                        model = pastas_pump(model, pump_path,
-                                            pump_sheet)
-
-                    temp = model.simulate(tmin="1950", tmax=tmax)
-                    s = Pastasfiles[i]
-                    result = re.search("_(.*)_GW", s)
-                    temp = temp.rename(result.group(1))
-                    well_data.append(temp)
-
-            # Well data with matching dates only
-            well_data_dates = functools.reduce(lambda left, right:
-                                               pd.merge(left, right,
-                                                        left_index=True,
-                                                        right_index=True),
-                                               well_data)
-            well_data_dates = well_data_dates[
-                (well_data_dates.index.year >= int(tmin)) &
-                (well_data_dates.index.year <= int(tmax))]
-
-            # All well data
-            all_well4_data = functools.reduce(lambda left, right:
-                                              pd.concat([left, right], axis=1,
-                                                        sort=True),
-                                              well_data)
-
-        # Keeps track of current z (bottom of layer)
-        curr_z = 0
-
-        # For each model
-        for i in range(1, num_clay+1):
-
-            print(wellnest, " Clay " + str(i))
-
-            # Specifies index and clay layer names
-            # VSC = very soft clay, MSC = medium stiff clay, SC = stiff
-            # clay, HC = hard clay
-
-            # If clay layer BK aquifer
-            if i == 1:
-                clay_name = "VSC"
-                aq_namet = "BK"
-                aq_nameb = "BK"
-
-            # If clay layer between BK and PD aquifer
-            elif i == 2:
-                clay_name = "MSC"
-                aq_namet = "BK"
-                aq_nameb = "PD"
-
-            # If clay layer between PD and NL aquifer
-            elif i == 3:
-                clay_name = "SC"
-                aq_namet = "PD"
-                aq_nameb = "NL"
-
-            # If clay layer between NL and NB aquifer
-            elif i == 4:
-                clay_name = "HC"
-                aq_namet = "NL"
-                aq_nameb = "NB"
-
-            # Thickness data, thickness for the clay layer, and  top and
-            # bottom aquifer
-            Thick_cl = Thick_data.loc[wellnest, clay_name]
-            Thick_aqb = Thick_data.loc[wellnest, aq_nameb]
-            Thick_aqt = Thick_data.loc[wellnest, aq_namet]
-
-            # Time for both aquifers is the same
-            # If clay layer above BK, no aquifer above it
-            if i == 1:
-
-                if mode == "Pastas":
-
-                    # BK head
-                    # Only bottom aquifer
-
-                    fullheadb = all_well4_data.iloc[:, i-1]
-                    headb = well_data_dates.iloc[:, i-1]
-
-                elif mode == "raw":
-
-                    # BK head
-                    # No top aquifer, only bottom aquifer
-                    headb = well_data.iloc[:, i-1]
-
-                # No top aquifer
-                headt = None
-
-                # Thickness/Specific storage of top aquifer is 0 because
-                # it doesn't exist
-                Thick_aqt = 0
-                Sske_aqt = 0
-
-            # All other clay layers not first or last
-            elif i != 4:
-
-                Thick_aqb /= 2  # NB aquifer not halved.
-                # Not simulating clay below it
-
-            # If not first aquifer
-            if i != 1:
-
-                if mode == "Pastas":
-
-                    fullheadb = all_well4_data.iloc[:, i-1]
-                    headb = well_data_dates.iloc[:, i-1]
-
-                    fullheadt = all_well4_data.iloc[:, i-2]
-                    headt = well_data_dates.iloc[:, i-2]
-
-                elif mode == "raw":
-
-                    headb = well_data.iloc[:, i-1]
-                    headt = well_data.iloc[:, i-2]
-
-                Sske_aqt = Sske_data.loc[wellnest, aq_namet]
-
-            # Creating time time series [0: len of time series]
-            timet = np.arange(len(headb.index))
-
-            # Thickness of top aquifer needs to be halved
-            # For all clay layers (top will be zero even if halved)
-            Thick_aqt /= 2
-
-            # Specific storage for clays, needed for DELAY CALCULATIONS
-            # Inelastic (v) and elastic (e)
-            Sskv_cl = Sskv_data.loc[wellnest, clay_name]
-            Sske_cl = Sske_data.loc[wellnest, clay_name]
-            Sske_aqb = Sske_data.loc[wellnest, aq_nameb]
-
-            # Kv for clays (m/day)
-            # Assuming Kv = Kh
-            # Using Chula value for BK clay for all clay values as starting
-            Kv_cl = K_data.loc[wellnest, clay_name]
-
-            # Number of clay layers
-            nclay = 1
-
-            # Number of time steps
-            Nt = 100
-
-            # z distribution, not used for calculation
-            # Only for plotting adnd reference
-            # mesh points in space
-            # Current z is at the bottom of the top aquifer
-            curr_z += Thick_aqt * 2
-
-            # Z distribution from bottom of top aq to
-            # bottom of clay
-            dz = Thick_cl/Nz
-            z = np.arange(curr_z + dz/2,
-                          curr_z + Thick_cl+dz/2,
-                          dz)
-            # Current z updated to now bottom of clay
-            z = np.insert(z, 0, curr_z)
-            curr_z += Thick_cl
-            z = np.append(z, curr_z)
-
-            # If running transient simulation before model run
-            # to get clay heads to where they need to be
-            if ic_run:
-
-                # Create daily time series
-                df = pd.DataFrame(index=pd.date_range("1950-01-01",
-                                                      headb.index[0],
-                                                      freq="d"))
-
-                # time
-                # Creating time time series [0: len of time series]
-                timet_ic = np.arange(len(df.index))
-
-                # If not the first clay layer
-                if i != 1:
-
-                    # First official model aquifer head in top and bottom
-                    headt1 = headt[0]
-                    headb1 = headb[0]
-
-                    # Getting subset of dates that are before tmin to be used
-                    # in linear interpolation of head
-                    # Top
-                    if mode == "raw":
-                        subsetdate_t = all_well_data.index[np.logical_and(
-                            ~all_well_data.iloc[:, i-2].isna(),
-                            all_well_data.index < headt.index[0])]
-                        interpdata = all_well_data.loc[
-                            subsetdate_t].iloc[:, i-2]
-                    elif mode == "Pastas":
-                        subsetdate_t = fullheadt.index[np.logical_and(
-                            ~fullheadt.isna(),
-                            fullheadt.index.year < int(tmin))]
-                        interpdata = fullheadt.loc[subsetdate_t]
-
-                    # Getting subset of index of those dates that are before
-                    # tmin to be used in linear interpolation of head
-                    subsetindex_t = []
-
-                    for j in range(len(subsetdate_t)):
-                        subsetindex_t = np.append(subsetindex_t,
-                                                  np.flatnonzero(
-                                                      df.index ==
-                                                      subsetdate_t[j]))
-
-                    # If no earlier GW obs before model start
-                    if len(subsetindex_t) == 0:
-
-                        # Two values and will interpolate between
-                        timet2_ic = [0, timet_ic[-1]]
-                        headt2_ic = [SS_data.loc[wellnest, aq_namet], headt1]
-
-                    # If there are GW obs before model start, uses it for
-                    # llnear interpolation with SS heads
-                    else:
-
-                        # Converting to int
-                        subsetindex_t = subsetindex_t.astype(int)
-
-                        # Values and will interpolate between; time for
-                        # interpolation
-                        timet2_ic = np.insert(subsetindex_t, 0, 0)
-                        timet2_ic = np.append(timet2_ic, timet_ic[-1])
-
-                        # SS, head before model run, and first model head
-                        # Values and will interpolate between
-                        # Top aquifer
-                        headt2_ic_subset = interpdata.values
-                        headt2_ic = np.insert(headt2_ic_subset, 0,
-                                              SS_data.loc[wellnest, aq_namet])
-                        headt2_ic = np.append(headt2_ic, headt1)
-
-                    # Bottom
-                    if mode == "raw":
-                        subsetdate_b = all_well_data.index[np.logical_and(
-                            ~all_well_data.iloc[:, i-1].isna(),
-                            all_well_data.index < headb.index[0])]
-                        interpdata = all_well_data.loc[
-                            subsetdate_b].iloc[:, i-1]
-                    elif mode == "Pastas":
-                        subsetdate_b = fullheadb.index[np.logical_and(
-                            ~fullheadb.isna(),
-                            fullheadb.index.year < int(tmin))]
-                        interpdata = fullheadb.loc[subsetdate_b]
-
-                    # Getting subset of index of those dates that are before
-                    # tmin to be used in linear interpolation of head
-                    subsetindex_b = []
-
-                    for j in range(len(subsetdate_b)):
-                        subsetindex_b = np.append(subsetindex_b,
-                                                  np.flatnonzero(
-                                                      df.index ==
-                                                      subsetdate_b[j]))
-
-                    # If no earlier GW obs before model start
-                    if len(subsetindex_b) == 0:
-                        # Two values and will interpolate between
-                        timeb2_ic = [0, timet_ic[-1]]
-                        headb2_ic = [SS_data.loc[wellnest, aq_nameb], headb1]
-
-                    # If there are GW obs before model start, uses it for
-                    # llnear interpolation with SS heads
-                    else:
-
-                        # Converting to int
-                        subsetindex_b = subsetindex_b.astype(int)
-
-                        # Values and will interpolate between; time for
-                        # interpolation
-                        timeb2_ic = np.insert(subsetindex_b, 0, 0)
-                        timeb2_ic = np.append(timeb2_ic, timet_ic[-1])
-
-                        # SS, head before model run, and first model head
-                        # Values and will interpolate between
-                        # Bottom aquifer
-                        headb2_ic_subset = interpdata.values
-                        headb2_ic = np.insert(headb2_ic_subset, 0,
-                                              SS_data.loc[wellnest, aq_nameb])
-                        headb2_ic = np.append(headb2_ic, headb1)
-
-                    # Interpolating
-                    headb_ic = pd.Series(np.interp(timet_ic, timeb2_ic,
-                                                   headb2_ic))  # Linear
-                    headb_ic.set_index = df.index
-                    headt_ic = pd.Series(np.interp(timet_ic, timet2_ic,
-                                                   headt2_ic))  # Linear
-                    headt_ic.set_index = df.index
-
-                    # Using Pastas constant d for initial condition
-                    # Linearly interpolated between top and bottom
-                    # constant d
-                    spacing = np.linspace(0, Nz+1, num=Nz+2, endpoint=True)
-                    constant_d_ic = np.interp(spacing,
-                                              [0, Nz+1],
-                                              [SS_data.loc[wellnest, aq_namet],
-                                               SS_data.loc[wellnest, aq_nameb]])
-
-                # If top clay layer i == 1
-                else:
-                    # Last spin up run is the first value in the first model
-                    # run
-                    # First official model aquifer head in top and bottom
-                    headb1 = headb[0]
-
-                    # Getting subset of dates that are before tmin to be used
-                    # in linear interpolation of head
-                    # Bottom
-                    if mode == "raw":
-                        subsetdate_b = all_well_data.index[np.logical_and(
-                            ~all_well_data.iloc[:, i-1].isna(),
-                            all_well_data.index < headb.index[0])]
-                        interpdata = all_well_data.loc[subsetdate_b].iloc[:, i]
-                    elif mode == "Pastas":
-                        subsetdate_b = fullheadb.index[np.logical_and(
-                            ~fullheadb.isna(),
-                            fullheadb.index.year < int(tmin))]
-                        interpdata = fullheadb.loc[subsetdate_b]
-
-                    # Getting subset of index of those dates that are before
-                    # tmin to be used in linear interpolation of head
-                    subsetindex_b = []
-
-                    for j in range(len(subsetdate_b)):
-                        subsetindex_b = np.append(subsetindex_b,
-                                                  np.flatnonzero(
-                                                      df.index ==
-                                                      subsetdate_b[j]))
-
-                    # If no earlier GW obs before model start
-                    if len(subsetindex_b) == 0:
-                        # Two values and will interpolate between
-                        timeb2_ic = [0, timet_ic[-1]]
-                        headb2_ic = [SS_data.loc[wellnest, aq_nameb], headb1]
-
-                    # If there are GW obs before model start, uses it for
-                    # llnear interpolation with SS heads
-                    else:
-
-                        # Converting to int
-                        subsetindex_b = subsetindex_b.astype(int)
-
-                        # Values and will interpolate between; time for
-                        # interpolation
-                        timeb2_ic = np.insert(subsetindex_b, 0, 0)
-                        timeb2_ic = np.append(timeb2_ic, timet_ic[-1])
-
-                        # SS, head before model run, and first model head
-                        # Values and will interpolate between
-                        # Bottom aquifer
-                        headb2_ic_subset = interpdata.values
-                        headb2_ic = np.insert(headb2_ic_subset, 0,
-                                              SS_data.loc[wellnest, aq_nameb])
-                        headb2_ic = np.append(headb2_ic, headb1)
-
-                    # Interpolating
-                    headb_ic = pd.Series(np.interp(timet_ic, timeb2_ic,
-                                                   headb2_ic))  # Linear
-                    headb_ic.set_index = df.index
-
-                    headt_ic = None
-
-                    # Using Pastas constant d for initial condition
-                    # Linearly interpolated between top and bottom
-                    # constant d
-                    spacing = np.linspace(0, Nz+1, num=Nz+2, endpoint=True)
-                    constant_d_ic = np.interp(spacing,
-                                              [0, Nz+1],
-                                              [0, SS_data.loc[wellnest, aq_nameb]])
-
-                print(wellnest, " Clay " + str(i) + " Initial Condition\n")
-
-                # Calculates sub
-                # Returns interpolated t, cum sub total, interp top head, bot
-                # head, cum sub inelastic, head matrix with top and bottom row
-                # as top and bottom aquifer (row is node, column is time)
-                t_ic, _, _, _, _, h_ic = \
-                    calc_deformation(timet_ic, headt_ic, headb_ic, Kv_cl,
-                                     Sskv_cl, Sske_cl, Sske_sandt=Sske_aqt,
-                                     Sske_sandb=Sske_aqb, claythick=Thick_cl,
-                                     nclay=nclay, sandthickt=Thick_aqt,
-                                     sandthickb=Thick_aqb,
-                                     Nz=Nz, CC=CC, Nt=Nt,
-                                     ic=constant_d_ic)
-
-            # If running transient simulation before model run
-            # to get clay heads to where they need to be
-            if ic_run:
-
-                # Calculates sub
-                # Returns interpolated t, cum sub total, interp top head, bot
-                # head, cum sub inelastic, head matrix with top and bottom row
-                # as top and bottom aquifer (row is node, column is time)
-                interp_t, sub, boundaryt, boundaryb, sub_v, h = \
-                    calc_deformation(timet, headt, headb, Kv_cl,
-                                     Sskv_cl, Sske_cl, Sske_sandt=Sske_aqt,
-                                     Sske_sandb=Sske_aqb, claythick=Thick_cl,
-                                     nclay=nclay, sandthickt=Thick_aqt,
-                                     sandthickb=Thick_aqb,
-                                     Nz=Nz, CC=CC, Nt=Nt,
-                                     ic=h_ic[:, -1])
-
-            # If not running to get initial condition
-            else:
-
-                # Calculates sub
-                # Returns interpolated t, cum sub total, interp top head, bot
-                # head, cum sub inelastic, head matrix with top and bottom row
-                # as top and bottom aquifer (row is node, column is time)
-                interp_t, sub, boundaryt, boundaryb, sub_v, h = \
-                    calc_deformation(timet, headt, headb, Kv_cl,
-                                     Sskv_cl, Sske_cl, Sske_sandt=Sske_aqt,
-                                     Sske_sandb=Sske_aqb, claythick=Thick_cl,
-                                     nclay=nclay, sandthickt=Thick_aqt,
-                                     sandthickb=Thick_aqb,
-                                     Nz=Nz, CC=CC, Nt=Nt)
-            # Well names
-            if mode == "Pastas":
-
-                # Getting well name from Pastas model file name
-                well_name = well_data[i-1].name
-
-            elif mode == "raw":
-
-                well_name = well_data.columns[i-1]
-
-            # Adds subsidence to total of all clay
-            # Stores records as wellnest, well, data in list
-            sub_total.append([wellnest, well_name,
-                              interp_t, sub])
-            subv_total.append([wellnest, well_name,
-                               interp_t, sub_v])
-
-            # If running transient simulation before model run
-            # to get clay heads to where they need to be
-            if ic_run:
-
-                # Saves heads in clay nodes, z distribution
-                # time original (original time series (0:len(date))), date
-                # Saves initial condition head and initial condition time
-                all_results.append([wellnest, well_name,
-                                    timet, headb.index, h, z, t_ic, h_ic])
-
-            else:
-
-                # Saves heads in clay nodes, z distribution
-                # time original (original time series (0:len(date))), date
-                all_results.append([wellnest, well_name,
-                                    timet, headb.index, h, z])
+        sub_total, subv_total, all_results = run_sub(num_clay,
+                                                     all_well4_data,
+                                                     well_data_dates, mode,
+                                                     tmin, tmax, SS_data,
+                                                     wellnest,
+                                                     K_data, Sskv_data,
+                                                     Sske_data,
+                                                     CC, Nz, Thick_data,
+                                                     ic_run,
+                                                     sub_total, subv_total,
+                                                     all_results)
 
     # Returns heads in clay nodes, z dist, cum sub time series for each well,
     # cum inelastic sub time series for each well, original time step

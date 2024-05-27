@@ -40,9 +40,17 @@ import os
 import pandas as pd
 import numpy as np
 import pickle
+import datetime as dt
+import warnings
 
 # Bangkok Subsidence Model Package
 import bkk_sub_gw
+
+# Hampel filter
+from hampel import hampel
+
+# Ignoring Pastas warnings
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 # %%###########################################################################
 # Runs the functions to calculate subsidence at point locations in BKK
@@ -53,7 +61,7 @@ import bkk_sub_gw
 importing = 1
 
 # If saving model
-saving = 1
+saving = 0
 
 # For well nest BKK013 (in paper) = LCBKK013
 wellnestlist = ["LCBKK013"]
@@ -196,7 +204,7 @@ bkk_sub_gw.bkk_plotting.sub_bar(path, model_sub["wellnestlist"],
 importing = 1
 
 # If saving model
-saving = 1
+saving = 0
 
 # If creating results for first time
 if importing == 0:
@@ -400,7 +408,7 @@ bkk_sub_gw.bkk_plotting.sub_rmse_map(path, model_sub["wellnestlist"],
 importing = 1
 
 # If saving
-saving = 1
+saving = 0
 
 # All ann subs
 all_ann_subs = []
@@ -496,7 +504,6 @@ if importing == 0:
                      "sub_total": sub_total,
                      "subv_total": subv_total,
                      "ann_sub": ann_sub,
-                     "avgsub": avgsub,
                      "tmin": tmin,
                      "tmax": tmax,
                      "Thick_data": Thick_data,
@@ -567,7 +574,7 @@ bkk_sub_gw.bkk_plotting.sub_forecast_map(path, model_sub["wellnestlist"],
 importing = 1
 
 # If saving odels
-saving = 1
+saving = 0
 
 # Sensitivity analysis
 sens_modes = ["Sske_clay", "thick", "Sskv", "K", "Sske_sand"]
@@ -596,6 +603,13 @@ for sens_mode in sens_modes:
 
         tmin = "1978"
         tmax = "2060"
+
+        mode = "Pastas"
+
+        # If mode is Pastas, need model path
+        if mode == "Pastas":
+
+            mpath = os.path.abspath("models")
 
         # Pumping flag, for PASTAS, if changing pumping scenario
         pumpflag = 1
@@ -764,3 +778,152 @@ for sens_mode in sens_modes:
                                           sens_sub, sens_subv, sens_ann,
                                           tmin=tmin, tmax=tmax, mode=sens_mode,
                                           num=num, save=1)
+
+# %%###########################################################################
+# Finds outliers in subsidence observations
+##############################################################################
+
+
+def find_outliers_IQR(df):
+    """
+    finds outliers
+
+    Parameters
+    ----------
+    df : dataframe
+        dataframe of data.
+
+    Returns
+    -------
+    outliers : dataframe
+        outliers.
+
+    """
+    q1 = df.quantile(0.25)
+
+    q3 = df.quantile(0.75)
+
+    IQR = q3-q1
+
+    outliers = df[((df < (q1-1.5*IQR)) | (df > (q3+1.5*IQR)))]
+
+    return outliers
+
+
+# For each well nest
+wellnestlist = ["LCBKK003",
+                "LCBKK005",
+                "LCBKK006",
+                "LCBKK007",
+                "LCBKK009",
+                "LCBKK011",
+                "LCBKK012",
+                "LCBKK013",
+                "LCBKK014",
+                "LCBKK015",
+                "LCBKK016",
+                "LCBKK018",
+                "LCBKK020",
+                "LCBKK021",
+                "LCBKK026",
+                "LCBKK027",
+                "LCBKK036",
+                "LCBKK038",
+                "LCBKK041",
+                "LCNBI003",
+                "LCNBI007",
+                "LCSPK007",
+                "LCSPK009"]
+
+# For each well nest, finds outliers
+IQRnum = 0
+hampelnum = 0
+for wellnest in wellnestlist:
+    # BENCHMARK LEVELING
+    # Subsidence plotting
+    # Getting benchmark time series
+    loc = os.path.join(os.path.abspath("inputs"),
+                       "SurveyingLevels.xlsx")
+    subdata = pd.read_excel(loc, sheet_name=wellnest + "_Leveling",
+                            index_col=3)
+
+    # SYNTHETIC DATA
+    # loc = os.path.join(os.path.abspath("inputs"),
+    #                    "synthetictruth_partial.xlsx")
+    # subdata = pd.read_excel(loc, index_col=0)
+    subdata = pd.DataFrame(subdata)
+    subdata.index = pd.to_datetime(subdata.index)
+    # Getting rid of benchmarks outside time period
+    subdata = subdata[(subdata.Year <= 2020)]
+
+    # Benchmarks should start at 0 at the first year.
+    bench = subdata.loc[:, subdata.columns.str.contains("Land")]
+    if (bench.iloc[0] != 0).any():
+        bench.iloc[0] = 0
+
+    # IMPORTANT INFO
+    # For benchmark measurements, the first year is 0, the second year
+    # is the compaction rate over that first year.
+    # For implicit Calc, the first year has a compaction rate over that
+    # year, so to shift benchmarks value to the previouse year to match
+    # Index has the right years
+    bench.index = bench.index.shift(-1, freq="D")
+    bench["date"] = bench.index
+
+    # Gets the last date of each year
+    lastdate = bench.groupby(pd.DatetimeIndex(bench["date"]).year,
+                             as_index=False).agg(
+                                 {"date": max}).reset_index(drop=True)
+    bench = bench.loc[lastdate.date]
+
+    # Dataframe prep
+    daterange = pd.date_range(dt.datetime(1978, 12, 31), periods=43,
+                              freq="Y").tolist()
+    df = pd.DataFrame(daterange, columns=["date"])
+
+    # annual data in cm
+    plot_data = df.merge(bench, left_on=df.date,
+                         right_on=bench.index,
+                         how="left")
+
+    # plot_data = plot_data.drop(columns=["date_x", "date_y"])
+    # Renaming for second merge
+    plot_data = plot_data.rename(columns={"key_0": "key0"})
+
+    plot_data = plot_data.dropna(axis=0)
+
+    # OBSERVATION
+    dobs = plot_data[plot_data.columns[
+                     plot_data.columns.str.contains("Land")].item()]
+    dobs = dobs[dobs != 0]
+    dobs.index = plot_data.key0[dobs.index]
+
+    # FINDS OUTLIERS
+    IQRoutliers = find_outliers_IQR(-dobs)
+    hampeloutliers = hampel(-dobs, window_size=3, n_sigma=3.5).outlier_indices
+
+    print(wellnest)
+    print("\n IQR Method")
+    print("\nnumber of outliers: " + str(len(IQRoutliers)))
+
+    if len(IQRoutliers) > 0:
+
+        IQRnum += 1
+
+    if len(hampeloutliers) > 0:
+
+        hampelnum += 1
+
+    print("\nmax outlier value: " + str(IQRoutliers.max()))
+
+    print("\nmin outlier value: " + str(IQRoutliers.min()))
+
+    print("\n Hampel Method")
+    print("\nnumber of outliers: " + str(len(hampeloutliers)))
+
+    print("\nmax outlier value: " + str(-dobs[hampeloutliers].max()))
+
+    print("\nmin outlier value: " + str(-dobs[hampeloutliers].min()))
+
+print("IQR number of well nests: " + str(IQRnum))
+print("Hampel number of well nests: " + str(hampelnum))

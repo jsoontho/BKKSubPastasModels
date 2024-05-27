@@ -9,6 +9,11 @@
 
 Current release:  [![DOI](https://zenodo.org/badge/603990947.svg)](https://zenodo.org/doi/10.5281/zenodo.11096275)
 
+Libraries:
+`Pastas`: 1.3.0
+`Pandas`: 2.1.4
+`Numpy`: 1.26.3
+
 Various python scripts are provided that create different graphical results. Jupyter Note book versions are in `JupyterNotebooks\.`
 
 - `Figures.py`: Produces the figures shown in the main text of the paper
