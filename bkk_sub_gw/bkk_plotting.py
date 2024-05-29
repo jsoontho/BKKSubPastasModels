@@ -1167,7 +1167,7 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
 
         map.scatter(x[cluster == 1], y[cluster == 1],
                     c=cs[cluster == 1], marker="s",
-                    label="Noisy Observations",
+                    label="Outliers in Observations",
                     cmap="RdYlBu_r", norm=norm, s=25,
                     edgecolor="k", linewidth=.75, zorder=3)
 
@@ -1198,7 +1198,7 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
                                        markersize=2, label="Bad Fits")
         black_square = mlines.Line2D([], [], color="k", marker="s",
                                      linestyle="None",
-                                     markersize=2, label="Noisy Observations")
+                                     markersize=2, label="Outliers")
         plt.legend(handles=[black_cirle, black_triangle, black_square],
                    loc="lower right", prop={"size": 4})
 
