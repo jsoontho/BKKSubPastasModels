@@ -213,13 +213,13 @@ def sub_bar(path, wellnestlist, all_results,
                                      squared=False)
 
             # Plotting settings
-            plt.legend(loc="center right")
+            plt.legend(loc="center right", fontsize=10)
             # set y limits/title only if running batch well nests
             if len(wellnestlist) > 1:
                 plt.ylim((-2, 10))
                 plt.title(wellnest)
-            plt.ylabel("Annual Subsidence Rate (cm/yr)")
-            plt.xlabel("Years")
+            plt.ylabel("Annual Subsidence \n Rate (cm/yr)", fontsize=12)
+            plt.xlabel("Years", fontsize=12)
             plt.annotate("RMSE: " + "{:.1f}".format(rms) + " cm/year",
                          xy=(.99, .97), xycoords="axes fraction",
                          fontsize=10, horizontalalignment="right",
@@ -229,6 +229,7 @@ def sub_bar(path, wellnestlist, all_results,
             rmse.append(rms)
 
             ax = plt.gca()
+            ax.tick_params(axis='both', which='major', labelsize=10)
             plt.draw()
             plt.axhline(y=0, color="k", linestyle="-", linewidth=1)
             ax.set_xticklabels(ax.get_xticks(), rotation=45)
