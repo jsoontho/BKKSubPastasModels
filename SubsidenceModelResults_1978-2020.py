@@ -405,7 +405,7 @@ bkk_sub_gw.bkk_plotting.sub_rmse_map(path, model_sub["wellnestlist"],
 ##############################################################################
 
 # Creating (0) or importing (1)
-importing = 1
+importing = 0
 
 # If saving
 saving = 0
@@ -441,7 +441,16 @@ if importing == 0:
                     "LCSPK007",
                     "LCSPK009"]
     tmin = "1978"
-    tmax = "2060"
+    tmax = "2110"
+
+    # Mode can be "raw" as in raw groundwater data vs "Pastas" for importing Pastas
+    # simulated groundwater in the aquifers
+    mode = "Pastas"
+
+    # If mode is Pastas, need model path
+    if mode == "Pastas":
+
+        mpath = os.path.abspath("models")
 
     # Pumping flag, for PASTAS, if changing pumping scenario
     pumpflag = 1

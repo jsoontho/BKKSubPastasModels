@@ -58,10 +58,10 @@ plt.rc("legend", fontsize=6)  # fontsize of the legend
 ###############################################################################
 
 # If saving model, save_model = 1
-save_model = 1
+save_model = 0
 
 # If importing previous saved models, import_model = 1
-import_model = 0
+import_model = 1
 
 # If saving graphs, save_graph = 1
 save_graph = 1

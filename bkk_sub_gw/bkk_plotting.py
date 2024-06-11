@@ -142,11 +142,11 @@ def sub_bar(path, wellnestlist, all_results,
                 bench = pd.DataFrame()
 
         # BAR PLOT preparation
-        daterange = pd.date_range(dt.datetime(1978, 12, 31), periods=43,
+        daterange = pd.date_range(dt.datetime(1990, 12, 31), periods=21,
                                   freq="Y").tolist()
         df = pd.DataFrame(daterange, columns=["date"])
 
-        x = np.arange(43)
+        x = np.arange(21)
         width = .5
 
         # Figure plotting model results against measurements
@@ -167,6 +167,7 @@ def sub_bar(path, wellnestlist, all_results,
         plot_data = df.merge(annual_data[num_well][1]*100, left_on=df.date,
                              right_on=annual_data[num_well][1].index,
                              how="left")
+
         # Renaming for second merge
         plot_data = plot_data.rename(columns={"key_0": "key0"})
 
@@ -233,15 +234,11 @@ def sub_bar(path, wellnestlist, all_results,
             plt.draw()
             plt.axhline(y=0, color="k", linestyle="-", linewidth=1)
             ax.set_xticklabels(ax.get_xticks(), rotation=45)
-            plt.xticks(x+width, ["1978", "", "1980", "", "1982",
-                                 "", "1984", "", "1986", "",
-                                 "1988", "", "1990", "", "1992",
+            plt.xticks(x+width, ["1990", "", "1992",
                                  "", "1994", "", "1996", "",
                                  "1998", "", "2000", "", "2002",
                                  "", "2004", "", "2006", "",
-                                 "2008", "", "2010", "", "2012",
-                                 "", "2014", "", "2016", "",
-                                 "2018", "", "2020"])
+                                 "2008", "", "2010"])
         # Setting fig size again
         # set fig size certain way if running batch well nests
         # Supplemental Information
@@ -1551,7 +1548,7 @@ def Pastas_results(models, Wellnest_name, well_names,
 
             # Simulation plot
             sim.plot(ax=ax1, x_compat=True,
-                     label=f"Simulated (RMSE = {calirmse:.2}, {valirmse:.2}, {rmse:.2} m)",
+                     label=f"Simulated",
                      linewidth=1.5, color=color)
 
         # Plot 1 settings

@@ -67,9 +67,10 @@ x = pd.date_range(start=pump_2020.Date[0],
 # Plotting
 fig, axs = plt.subplots(3, sharex=True, figsize=(6.75, 3.38), dpi=300)
 axs[0].plot(pump_2020.Date[:19733], pump_2020.Pump2[:19733], linewidth=1.5)
-axs[0].set_ylabel("Pumping Rate\n(m$^3$/day)")
+axs[0].set_ylabel("Pumping Rate\n(m$^3$/day)", fontsize=10)
+axs[0].tick_params(axis='both', which='major', labelsize=8)
 axs[0].set_title("Basin-Wide Pumping Estimates",
-                 fontsize=7)
+                 fontsize=12)
 axs[0].grid(True, linestyle="dotted")
 
 # Plottign groundwater
@@ -97,15 +98,15 @@ gw_well_head["year"] = gw_well_head.index.year
 axs[1].plot(gw_well_head.index, gw_well_head.Head, color="k",
             linewidth=1.5)
 axs[1].set_xlim(([datetime.date(1954, 1, 1), datetime.date(2020, 12, 31)]))
-axs[1].set_ylabel("Head (m)")
-
+axs[1].set_ylabel("Head (m)", fontsize=10)
+axs[1].tick_params(axis='both', which='major', labelsize=8)
 # Detailed title
 # axs[1].set_title("Measured Groundwater Levels for Well PD32 in Well Nest BKK013",
 #                  fontsize=7)
 
 # Generalized title
 axs[1].set_title("Measured Groundwater Levels",
-                 fontsize=7)
+                 fontsize=12)
 axs[1].grid(True, linestyle="dotted")
 loc = os.path.join(os.path.abspath("inputs"), "SurveyingLevels.xlsx")
 
@@ -146,7 +147,7 @@ leveling[leveling == 0] = np.nan
 axs[2].bar(leveling.index, -leveling.values, color="orange", width=300)
 axs[2].xaxis_date()
 axs[2].set_xlim(([datetime.date(1954, 1, 1), datetime.date(2020, 12, 31)]))
-axs[2].set_ylabel("Annual Rate\n(cm/year)")
+axs[2].set_ylabel("Annual Rate\n(cm/year)", fontsize=10)
 # Detailed title
 # axs[2].set_title(
 #     "Measured Annual Land Subsidence Rates from Benchmark Leveling Station 5503",
@@ -154,10 +155,11 @@ axs[2].set_ylabel("Annual Rate\n(cm/year)")
 # Generalized title
 axs[2].set_title(
     "Measured Annual Land Subsidence Rates",
-    fontsize=7)
+    fontsize=12)
 plt.tight_layout()
 plt.rc("font", size=10)  # controls default text size
 axs[2].grid(True, linestyle="dotted")
+axs[2].tick_params(axis='both', which='major', labelsize=8)
 
 # a), b), c) labels for paper
 for index, ax in enumerate(axs):
