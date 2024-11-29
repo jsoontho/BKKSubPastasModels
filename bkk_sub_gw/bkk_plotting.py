@@ -1171,11 +1171,11 @@ def draw_basemap(map, xs, ys, cs=None, fig=None, ax=None,
 
         # Hampel noise
         # Bad fits
-        cluster = np.array([0, 2, 2, 1, 0,
+        cluster = np.array([0, 2, 2, 0, 0,
                             1, 2, 0, 0, 0,
                             0, 0, 1, 0, 0,
                             1, 1, 0, 0, 0,
-                            1, 1, 0])
+                            0, 1, 0])
 
         map.scatter(x[cluster == 2], y[cluster == 2], zorder=3, marker="^",
                     c=cs[cluster == 2], label="Bad Fits",
